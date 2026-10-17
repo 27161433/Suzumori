@@ -31,18 +31,31 @@ class GuardService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * 在 onCreate 就開始守護，不等 onStartCommand。
+     *
+     * 實測從多工畫面滑掉後，HyperOS 會在約 1 秒內重新建立服務，但只呼叫 onCreate 與 onTaskRemoved，
+     * 不呼叫 onStartCommand。如果只在 onStartCommand 開始監聽，服務程序雖然在，卻要等到下一次
+     * 定期檢查（最長 15 分鐘以上）才會真正開始守護。
+     */
     override fun onCreate() {
         super.onCreate()
         Diag.i("GuardService onCreate")
+        startGuarding()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // intent 為 null 代表程序被殺後由系統依 START_STICKY 重新啟動。
         Diag.i("GuardService onStartCommand startId=$startId stickyRestart=${intent == null} watching=${watching != null}")
+        startGuarding()
+        return START_STICKY
+    }
+
+    /** 進入前景並開始監聽；可以重複呼叫。 */
+    private fun startGuarding() {
         GuardNotifications.ensureChannel(this)
         startForeground(GuardNotifications.ID, GuardNotifications.build(this, null))
         if (watching == null) watching = scope.launch { watch() }
-        return START_STICKY
     }
 
     @OptIn(FlowPreview::class)
