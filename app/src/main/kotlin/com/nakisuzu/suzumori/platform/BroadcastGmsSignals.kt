@@ -3,9 +3,9 @@ package com.nakisuzu.suzumori.platform
 import android.content.Context
 import android.content.Intent
 import com.nakisuzu.suzumori.core.Packages
-import com.nakisuzu.suzumori.core.diagnostic.describe
 import com.nakisuzu.suzumori.core.signal.GmsSignals
 import com.nakisuzu.suzumori.core.signal.SendResult
+import com.nakisuzu.suzumori.core.util.describe
 
 class BroadcastGmsSignals(private val context: Context) : GmsSignals {
 
@@ -26,7 +26,6 @@ class BroadcastGmsSignals(private val context: Context) : GmsSignals {
     companion object {
         const val ACTION_REFRESH_WHITE_LIST = "com.xiaomi.mipush.REFRESH_WHITE_LIST_ACTION"
         const val ACTION_GCM_RECONNECT = "com.google.android.intent.action.GCM_RECONNECT"
-        const val ACTION_GTALK_HEARTBEAT = "com.google.android.intent.action.GTALK_HEARTBEAT"
         const val ACTION_MCS_HEARTBEAT = "com.google.android.intent.action.MCS_HEARTBEAT"
 
         /**
@@ -38,12 +37,9 @@ class BroadcastGmsSignals(private val context: Context) : GmsSignals {
             .putExtra("pkgName", Packages.GMS)
             .putExtra("option", -1)
 
-        fun reconnectIntents(): List<Intent> = buildList {
-            add(Intent(ACTION_GCM_RECONNECT).setPackage(Packages.GMS))
-            for (target in listOf(Packages.GMS, Packages.GSF)) {
-                add(Intent(ACTION_GTALK_HEARTBEAT).setPackage(target))
-                add(Intent(ACTION_MCS_HEARTBEAT).setPackage(target))
-            }
-        }
+        fun reconnectIntents(): List<Intent> = listOf(
+            Intent(ACTION_GCM_RECONNECT).setPackage(Packages.GMS),
+            Intent(ACTION_MCS_HEARTBEAT).setPackage(Packages.GMS),
+        )
     }
 }

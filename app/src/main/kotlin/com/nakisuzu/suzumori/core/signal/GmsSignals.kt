@@ -10,7 +10,11 @@ interface GmsSignals {
     /** 請系統解凍主使用者下的 GMS（MiPush 白名單刷新廣播，option = -1）。 */
     fun sendUnfreeze(): List<SendResult>
 
-    /** 請 GMS 重新連線（GCM_RECONNECT），並送出 GTALK／MCS 心跳。 */
+    /**
+     * 請 GMS 重新連線：`GCM_RECONNECT` 與 `MCS_HEARTBEAT`。
+     *
+     * 實測 HyperOS 4 上 `GTALK_HEARTBEAT` 與送給 GSF 的心跳都沒有接收端，所以不送。
+     */
     fun sendReconnect(): List<SendResult>
 }
 
