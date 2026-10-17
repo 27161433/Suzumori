@@ -63,6 +63,7 @@ fun DiagnosticScreen(viewModel: DiagnosticViewModel) {
             cleanup = viewModel::cleanupTestWrites,
             sendUnfreeze = viewModel::sendUnfreeze,
             sendReconnect = viewModel::sendReconnect,
+            sendDelayed = viewModel::sendUnfreezeAndReconnectDelayed,
             openFcmDiagnostics = {
                 val error = SystemPages.openFcmDiagnostics(context)
                 viewModel.log(if (error == null) "已開啟 FCM 診斷" else "開啟 FCM 診斷失敗", error.orEmpty())
@@ -84,6 +85,7 @@ class DiagnosticActions(
     val cleanup: () -> Unit,
     val sendUnfreeze: () -> Unit,
     val sendReconnect: () -> Unit,
+    val sendDelayed: () -> Unit,
     val openFcmDiagnostics: () -> Unit,
     val share: () -> Unit,
     val clearLog: () -> Unit,
@@ -116,7 +118,7 @@ private fun DiagnosticContent(state: DiagnosticUiState, actions: DiagnosticActio
             item { KeySection("MILLET_NO_RESTRICT_APP（白天防線）", state.millet, actions.refresh) }
             item { KeySection("com.miui.game.allowlist（夜間防線）", state.game, actions.refresh) }
             item { WriteTestSection(state.busy, state.baseline, actions) }
-            item { BroadcastSection(state.busy, state.receivers, actions) }
+            item { BroadcastSection(state.busy, state.pendingDelayedSend, state.receivers, actions) }
             item { DeviceSection(state.device) }
             item { LogHeader(actions) }
             if (state.log.isEmpty()) {
@@ -238,7 +240,12 @@ private fun WriteTestSection(busy: Boolean, baseline: GameAllowlistBaseline?, ac
 }
 
 @Composable
-private fun BroadcastSection(busy: Boolean, receivers: List<ReceiverInspector.Check>, actions: DiagnosticActions) {
+private fun BroadcastSection(
+    busy: Boolean,
+    pendingDelayedSend: Boolean,
+    receivers: List<ReceiverInspector.Check>,
+    actions: DiagnosticActions,
+) {
     Section("解凍與重連") {
         Hint("送出後只能確認「已送出」，無法確認對方有收到。建議先送解凍，等 1 到 2 秒再送重連，然後開 FCM 診斷確認連線。")
         Button(onClick = actions.sendUnfreeze, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
@@ -247,12 +254,26 @@ private fun BroadcastSection(busy: Boolean, receivers: List<ReceiverInspector.Ch
         Button(onClick = actions.sendReconnect, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
             Text("送出重連廣播")
         }
+        Hint(
+            "亮螢幕本身就會解凍 GMS，所以上面兩個按鈕無法證明解凍廣播有效。" +
+                "延遲測試：先把本 App 設為省電「無限制」，按下後立刻鎖螢幕，60 秒後會在螢幕關閉時送出解凍、等 2 秒再送重連。",
+        )
+        FilledTonalButton(
+            onClick = actions.sendDelayed,
+            enabled = !pendingDelayedSend,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(if (pendingDelayedSend) "延遲測試進行中…" else "60 秒後解凍並重連（鎖螢幕測試）")
+        }
         OutlinedButton(onClick = actions.openFcmDiagnostics, modifier = Modifier.fillMaxWidth()) {
             Text("開啟 FCM 診斷")
         }
         HorizontalDivider()
         Text("靜態接收端（輔助資訊）", style = MaterialTheme.typography.labelMedium)
-        Hint("系統動態註冊的接收端查不到，解凍廣播查不到是正常的。若接收端要求本 App 沒有的權限，廣播會被默默丟棄。")
+        Hint(
+            "只查得到 manifest 宣告的接收端。系統的解凍接收端、GMS 的重連與心跳接收端都是執行時動態註冊的，" +
+                "查不到是正常的。若查到的接收端要求本 App 沒有的權限，廣播會被默默丟棄。",
+        )
         for (check in receivers) {
             Text(check.label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
             if (check.receivers.isEmpty()) {

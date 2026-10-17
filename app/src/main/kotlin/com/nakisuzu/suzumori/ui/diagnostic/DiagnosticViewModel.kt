@@ -20,6 +20,7 @@ import com.nakisuzu.suzumori.core.signal.SendResult
 import com.nakisuzu.suzumori.platform.BroadcastGmsSignals
 import com.nakisuzu.suzumori.platform.DeviceInfoReader
 import com.nakisuzu.suzumori.platform.ReceiverInspector
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -77,6 +78,26 @@ class DiagnosticViewModel(
     fun sendUnfreeze() = runAction("送出解凍廣播") { describe(signals.sendUnfreeze()) }
 
     fun sendReconnect() = runAction("送出重連廣播") { describe(signals.sendReconnect()) }
+
+    /**
+     * 亮螢幕本身就會解凍 GMS，所以要驗證解凍廣播是否有效，必須在螢幕關閉、GMS 已被凍結時送出。
+     * 按下後鎖螢幕，延遲結束才依序送出解凍與重連。本 App 必須設為省電「無限制」，否則自己也會被凍結。
+     */
+    fun sendUnfreezeAndReconnectDelayed() {
+        if (_state.value.pendingDelayedSend) return
+        _state.update { it.copy(pendingDelayedSend = true) }
+        log("延遲測試已排定", "${DELAYED_SEND_SECONDS} 秒後送出解凍廣播，再等 ${RECONNECT_DELAY_MS / 1000} 秒送出重連廣播。請現在鎖定螢幕。")
+        viewModelScope.launch {
+            try {
+                delay(DELAYED_SEND_SECONDS * 1000L)
+                log("延遲測試：送出解凍廣播", describe(signals.sendUnfreeze()))
+                delay(RECONNECT_DELAY_MS)
+                log("延遲測試：送出重連廣播", describe(signals.sendReconnect()))
+            } finally {
+                _state.update { it.copy(pendingDelayedSend = false) }
+            }
+        }
+    }
 
     fun log(title: String, detail: String = "") {
         val entry = LogEntry(nextLogId.getAndIncrement(), System.currentTimeMillis(), title, detail)
@@ -155,6 +176,8 @@ class DiagnosticViewModel(
     companion object {
         private const val MAX_LOG = 500
         private const val LOG_VALUE_LIMIT = 400
+        private const val DELAYED_SEND_SECONDS = 60
+        private const val RECONNECT_DELAY_MS = 2_000L
 
         val Factory = viewModelFactory {
             initializer {

@@ -13,6 +13,8 @@ data class DiagnosticUiState(
     val device: DeviceInfo? = null,
     val receivers: List<ReceiverInspector.Check> = emptyList(),
     val busy: Boolean = false,
+    /** 延遲解凍測試已排定、尚未送出。 */
+    val pendingDelayedSend: Boolean = false,
     /** 新的在前。 */
     val log: List<LogEntry> = emptyList(),
 )
