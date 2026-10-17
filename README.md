@@ -89,6 +89,13 @@ adb shell settings put system com.miui.game.allowlist "<移除 com.google.androi
 
 只剩 GMS 時寫入空字串 `""`，不要用 `settings delete`。
 
+## 依賴
+
+- 只使用 Google（AndroidX、Jetpack）與 JetBrains（Kotlin、kotlinx）官方的函式庫，**唯一的例外**是介面：
+  - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：HyperOS 風格的 Compose 元件、毛玻璃效果。
+  - 它所依賴的 [MaterialKolor](https://github.com/jordond/materialkolor)（MIT）。
+- 沒有 `INTERNET` 權限，也沒有任何分析、統計或錯誤回報 SDK。
+
 ## 建置
 
 需求：JDK 17 以上、Android SDK（compileSdk 37）。
