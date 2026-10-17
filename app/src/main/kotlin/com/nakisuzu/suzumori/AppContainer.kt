@@ -17,6 +17,7 @@ import com.nakisuzu.suzumori.platform.DataStoreGuardStateStore
 import com.nakisuzu.suzumori.platform.DeviceStorage
 import com.nakisuzu.suzumori.platform.GuardActions
 import com.nakisuzu.suzumori.platform.GuardScheduler
+import com.nakisuzu.suzumori.platform.SelfMonitor
 import com.nakisuzu.suzumori.platform.SystemSettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +61,7 @@ class AppContainer(context: Context) {
 
     val scheduler = GuardScheduler(appContext)
     val actions = GuardActions(controller, configs, scheduler, appContext.packageName)
+    val selfMonitor = SelfMonitor(appContext, eventLog, guardState)
 
     private companion object {
         /** 第 0 階段就使用的名稱，沿用以便搬移舊的清理基準。 */

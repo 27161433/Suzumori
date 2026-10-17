@@ -49,6 +49,7 @@ class MainViewModel(
             config = config,
             lastPatch = guard.lastPatch,
             lastUnfreeze = guard.lastUnfreeze,
+            lastSelfIssue = guard.lastSelfIssue,
             events = events.asReversed(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())

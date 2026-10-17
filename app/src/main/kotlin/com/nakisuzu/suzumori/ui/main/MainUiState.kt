@@ -21,6 +21,8 @@ data class MainUiState(
     val config: GuardConfig = GuardConfig(),
     val lastPatch: ActionRecord? = null,
     val lastUnfreeze: ActionRecord? = null,
+    /** 本 App 最近一次被暫停或程序被結束。 */
+    val lastSelfIssue: ActionRecord? = null,
     /** 新的在前。 */
     val events: List<EventEntry> = emptyList(),
     val busy: Boolean = false,

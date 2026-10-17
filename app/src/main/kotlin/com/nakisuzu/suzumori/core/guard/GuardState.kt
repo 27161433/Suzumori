@@ -17,6 +17,10 @@ data class GuardState(
     val lastReloadedBootCount: Int? = null,
     val lastPatch: ActionRecord? = null,
     val lastUnfreeze: ActionRecord? = null,
+    /** 本 App 最近一次被暫停（凍結）或程序被結束。 */
+    val lastSelfIssue: ActionRecord? = null,
+    /** 已經記錄過的程序結束紀錄中最新的時間，避免重複記錄。 */
+    val lastExitReportedAtMillis: Long? = null,
 )
 
 interface GuardStateStore {

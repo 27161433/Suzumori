@@ -28,6 +28,10 @@ class DataStoreGuardStateStore(private val dataStore: DataStore<Preferences>) : 
             prefs.putOrRemove(LAST_RELOADED_BOOT, updated.lastReloadedBootCount)
             prefs.putRecord(PATCH_PREFIX, updated.lastPatch)
             prefs.putRecord(UNFREEZE_PREFIX, updated.lastUnfreeze)
+            prefs.putRecord(SELF_ISSUE_PREFIX, updated.lastSelfIssue)
+            val exitKey = LAST_EXIT_REPORTED
+            val exitAt = updated.lastExitReportedAtMillis
+            if (exitAt == null) prefs.remove(exitKey) else prefs[exitKey] = exitAt
         }
     }
 
@@ -36,6 +40,8 @@ class DataStoreGuardStateStore(private val dataStore: DataStore<Preferences>) : 
         lastReloadedBootCount = this[LAST_RELOADED_BOOT],
         lastPatch = record(PATCH_PREFIX),
         lastUnfreeze = record(UNFREEZE_PREFIX),
+        lastSelfIssue = record(SELF_ISSUE_PREFIX),
+        lastExitReportedAtMillis = this[LAST_EXIT_REPORTED],
     )
 
     private fun Preferences.record(prefix: String): ActionRecord? {
@@ -67,7 +73,9 @@ class DataStoreGuardStateStore(private val dataStore: DataStore<Preferences>) : 
     private companion object {
         val LAST_ENSURED_BOOT = intPreferencesKey("last_ensured_boot_count")
         val LAST_RELOADED_BOOT = intPreferencesKey("last_reloaded_boot_count")
+        val LAST_EXIT_REPORTED = longPreferencesKey("last_exit_reported_at")
         const val PATCH_PREFIX = "last_patch"
         const val UNFREEZE_PREFIX = "last_unfreeze"
+        const val SELF_ISSUE_PREFIX = "last_self_issue"
     }
 }

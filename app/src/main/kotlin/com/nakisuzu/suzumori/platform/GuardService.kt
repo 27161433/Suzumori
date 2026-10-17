@@ -61,6 +61,10 @@ class GuardService : Service() {
             }
         }
         launch { controller.ensure(Trigger.SERVICE_START) }
+
+        // 自我監測：上次程序為什麼被結束，以及服務存活期間有沒有被凍結。
+        launch { container.selfMonitor.reportPreviousExits() }
+        launch { container.selfMonitor.watchForPauses() }
     }
 
     override fun onDestroy() {

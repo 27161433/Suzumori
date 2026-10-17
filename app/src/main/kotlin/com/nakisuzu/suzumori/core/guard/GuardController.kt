@@ -391,6 +391,7 @@ val Trigger.isAutomatic: Boolean
         Trigger.TILE,
         Trigger.SETTINGS_CHANGED,
         Trigger.UNINSTALL_CLEANUP,
+        Trigger.SELF_MONITOR,
         -> false
         else -> true
     }

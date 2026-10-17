@@ -17,6 +17,7 @@ enum class Trigger(val label: String) {
     SERVICE_START("服務啟動"),
     SETTINGS_CHANGED("設定變更"),
     UNINSTALL_CLEANUP("解除安裝前清理"),
+    SELF_MONITOR("自我監測"),
     ;
 
     companion object {

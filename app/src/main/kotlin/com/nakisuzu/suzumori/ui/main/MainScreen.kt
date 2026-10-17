@@ -142,6 +142,12 @@ private fun StatusSection(state: MainUiState) {
         ValueRow(title = "系統版本", value = state.systemVersion ?: "未知")
         ValueRow(title = "最近一次修補", value = recordText(state.lastPatch), summary = state.lastPatch?.summary)
         ValueRow(title = "最近一次解凍", value = recordText(state.lastUnfreeze))
+        ValueRow(
+            title = "本 App 運作狀況",
+            value = state.lastSelfIssue?.let(::recordText) ?: "未偵測到異常",
+            tone = if (state.lastSelfIssue == null) Tone.Good else Tone.Neutral,
+            summary = state.lastSelfIssue?.summary ?: "被凍結或程序被結束時會記錄在這裡與事件紀錄",
+        )
     }
 }
 
