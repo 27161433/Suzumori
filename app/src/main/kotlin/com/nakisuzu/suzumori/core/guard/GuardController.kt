@@ -90,7 +90,8 @@ class GuardController(
             }
         }
 
-        collect(ensureMillet(trigger), "MILLET 補回 GMS")
+        val (milletOutcome, milletSummary) = ensureMillet(trigger)
+        collect(milletOutcome, milletSummary)
         if (config.nightProtection) {
             val (outcome, summary) = ensureGameAllowlist(trigger, config, bootCount, state)
             collect(outcome, summary)
@@ -111,17 +112,30 @@ class GuardController(
         )
     }
 
-    private suspend fun ensureMillet(trigger: Trigger): PatchOutcome {
+    /**
+     * 確保 GMS 與本 App 都在 MILLET 名單中。
+     *
+     * 本 App 也要在名單中：即使小米自動取消了本 App 的「無限制」，Greezer 仍會豁免本 App，
+     * 本 App 才能持續監聽並補回名單。
+     */
+    private suspend fun ensureMillet(trigger: Trigger): Pair<PatchOutcome, String> {
         val key = SettingKeys.MILLET_NO_RESTRICT_APP
+        val required = listOf(Packages.GMS, selfPackage)
         val current = observe(trigger, key)
-        if (MilletList.contains(current, Packages.GMS)) return PatchOutcome.ALREADY_OK
-        return patch(
+        val missing = required.filterNot { MilletList.contains(current, it) }
+        if (missing.isEmpty()) return PatchOutcome.ALREADY_OK to ""
+        val names = missing.joinToString("、") { displayName(it) }
+        val outcome = patch(
             trigger = trigger,
             key = key,
-            action = "追加 GMS",
-            compute = { latest -> if (MilletList.contains(latest, Packages.GMS)) null else MilletList.add(latest, Packages.GMS) },
-            verify = { readBack, _ -> MilletList.contains(readBack, Packages.GMS) },
+            action = "追加 $names",
+            compute = { latest ->
+                val stillMissing = required.filterNot { MilletList.contains(latest, it) }
+                if (stillMissing.isEmpty()) null else stillMissing.fold(latest) { acc, pkg -> MilletList.add(acc, pkg) }
+            },
+            verify = { readBack, _ -> required.all { MilletList.contains(readBack, it) } },
         )
+        return outcome to "MILLET 補回 $names"
     }
 
     /**

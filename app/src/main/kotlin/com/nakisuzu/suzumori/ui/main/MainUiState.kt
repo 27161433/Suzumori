@@ -9,7 +9,12 @@ data class MainUiState(
     val canWrite: Boolean = true,
     val milletHasGms: Boolean = false,
     val gameHasGms: Boolean = false,
-    /** 本 App 在 MILLET 名單中，代表使用者已把省電策略設為「無限制」。 */
+    /**
+     * 使用者已把省電策略設為「無限制」。
+     *
+     * 小米設為「無限制」時會把 App 加入 DeviceIdle 使用者白名單，以 `isIgnoringBatteryOptimizations` 判斷。
+     * 不能再看 MILLET 名單，因為本 App 會自己維持在 MILLET 中。
+     */
     val selfNoRestrict: Boolean = false,
     /** `ro.mi.os.version.name` 與組建版本；讀不到時為 null。 */
     val systemVersion: String? = null,

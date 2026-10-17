@@ -1,6 +1,7 @@
 package com.nakisuzu.suzumori.ui.main
 
 import android.app.Application
+import android.os.PowerManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -81,7 +82,7 @@ class MainViewModel(
                     canWrite = container.settings.canWrite(),
                     milletHasGms = MilletList.contains(millet, Packages.GMS),
                     gameHasGms = GameAllowlist.contains(game, Packages.GMS),
-                    selfNoRestrict = MilletList.contains(millet, selfPackage),
+                    selfNoRestrict = app.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(selfPackage),
                 )
             }
         }

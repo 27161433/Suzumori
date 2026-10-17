@@ -58,7 +58,7 @@ class GuardControllerTest {
         )
     }
 
-    private val healthy = mapOf(millet to "com.a, $gms", game to "${gms}_$self")
+    private val healthy = mapOf(millet to "com.a, $gms, $self", game to "${gms}_$self")
 
     @Test
     fun `名單都正常時只讀取，不寫入也不送廣播`() = runTest {
@@ -87,7 +87,7 @@ class GuardControllerTest {
         assertTrue("時間軸：${h.timeline}", write in 0 until verify)
         assertTrue("時間軸：${h.timeline}", verify < unfreeze)
         assertTrue("時間軸：${h.timeline}", unfreeze < reconnect)
-        assertEquals("com.a,$gms", h.settings.values[millet])
+        assertEquals("com.a,$gms,$self", h.settings.values[millet])
         assertTrue(result.patched)
         assertNotNull(h.states.value.lastPatch)
     }
@@ -121,7 +121,18 @@ class GuardControllerTest {
 
         h.controller.ensure(Trigger.MILLET_CHANGED)
 
-        assertEquals("com.a, com.powerkeeper.new,$gms", h.settings.values[millet])
+        assertEquals("com.a, com.powerkeeper.new,$gms,$self", h.settings.values[millet])
+    }
+
+    @Test
+    fun `本 App 也維持在 MILLET 名單中，即使使用者的「無限制」被取消`() = runTest {
+        val h = Harness(this, mapOf(millet to "com.a, $gms", game to "${gms}_$self"))
+
+        val result = h.controller.ensure(Trigger.MILLET_CHANGED)
+
+        assertEquals("com.a, $gms,$self", h.settings.values[millet])
+        assertTrue(result.patched)
+        assertEquals("MILLET 補回 本 App", h.states.value.lastPatch?.summary)
     }
 
     @Test
@@ -279,9 +290,9 @@ class GuardControllerTest {
         h.controller.ensure(Trigger.MILLET_CHANGED)
 
         val detected = h.log.all.single { it.action.startsWith("偵測到外部變更") }
-        assertEquals("偵測到外部變更（移除 $gms；新增 com.revanced）", detected.action)
+        assertEquals("偵測到外部變更（移除 $gms、$self；新增 com.revanced）", detected.action)
         assertEquals("GMS 不在名單中", detected.result)
-        assertEquals("com.a, $gms", detected.before)
+        assertEquals("com.a, $gms, $self", detected.before)
         assertEquals("com.a, com.revanced", detected.after)
     }
 
@@ -322,7 +333,7 @@ class GuardControllerTest {
         assertNull(h.baselines.baseline)
         assertFalse(h.configs.current().autoGuard)
         assertFalse(h.configs.current().nightProtection)
-        assertEquals("清理不碰 MILLET", "com.a,$gms", h.settings.values[millet])
+        assertEquals("清理不碰 MILLET", "com.a,$gms,$self", h.settings.values[millet])
     }
 
     @Test
