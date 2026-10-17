@@ -25,6 +25,10 @@
         android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         tools:node="remove" />
 
+    <!-- 只放跳轉設定頁所需的套件（小米安全中心的 App 詳情頁）。 -->
+    <queries>
+        <package android:name="com.miui.securitycenter" />
+    </queries>
 
     <application
         android:name=".SuzumoriApp"
@@ -79,6 +83,15 @@
             </intent-filter>
         </service>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -2,6 +2,7 @@ package com.nakisuzu.suzumori.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -34,6 +35,8 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 fun SuzumoriPage(
     title: String,
     subtitle: String = "",
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
     overlay: @Composable () -> Unit = {},
     content: LazyListScope.() -> Unit,
 ) {
@@ -47,6 +50,8 @@ fun SuzumoriPage(
                     title = title,
                     subtitle = subtitle,
                     color = if (backdrop != null) Color.Transparent else MiuixTheme.colorScheme.surface,
+                    navigationIcon = navigationIcon,
+                    actions = actions,
                     scrollBehavior = scrollBehavior,
                 )
             }

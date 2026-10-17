@@ -3,7 +3,6 @@ package com.nakisuzu.suzumori
 import android.content.Context
 import com.nakisuzu.suzumori.core.baseline.BaselineStore
 import com.nakisuzu.suzumori.core.config.ConfigStore
-import com.nakisuzu.suzumori.core.diagnostic.FeasibilityTests
 import com.nakisuzu.suzumori.core.guard.GuardController
 import com.nakisuzu.suzumori.core.guard.GuardStateStore
 import com.nakisuzu.suzumori.core.log.EventLog
@@ -61,9 +60,6 @@ class AppContainer(context: Context) {
 
     val scheduler = GuardScheduler(appContext)
     val actions = GuardActions(controller, configs, scheduler, appContext.packageName)
-
-    // 第 0 階段的診斷頁仍在使用，下一個 commit 移除。
-    val feasibilityTests = FeasibilityTests(settings, baselines, appContext.packageName)
 
     private companion object {
         /** 第 0 階段就使用的名稱，沿用以便搬移舊的清理基準。 */

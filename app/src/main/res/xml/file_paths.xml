@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 事件紀錄匯出檔，透過 FileProvider 分享。 -->
+<paths>
+    <cache-path
+        name="exports"
+        path="exports/" />
+</paths>
