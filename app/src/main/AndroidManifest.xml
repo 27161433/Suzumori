@@ -8,8 +8,15 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:resizeableActivity="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.Suzumori">
+
+        <!-- targetSdk 低於 24 的 App 預設不可調整大小、最大長寬比 1.86，
+             在長螢幕上會出現黑邊。明確宣告可調整大小並放寬長寬比。 -->
+        <meta-data
+            android:name="android.max_aspect"
+            android:value="3.0" />
 
         <activity
             android:name=".MainActivity"
