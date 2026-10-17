@@ -20,6 +20,7 @@ import com.nakisuzu.suzumori.core.signal.SendResult
 import com.nakisuzu.suzumori.platform.BroadcastGmsSignals
 import com.nakisuzu.suzumori.platform.DeviceInfoReader
 import com.nakisuzu.suzumori.platform.ReceiverInspector
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ class DiagnosticViewModel(
 ) : ViewModel() {
     private val selfPackage = app.packageName
     private val nextLogId = AtomicLong()
+    private var delayedTest: Job? = null
     private val _state = MutableStateFlow(DiagnosticUiState())
     val state: StateFlow<DiagnosticUiState> = _state.asStateFlow()
 
@@ -81,20 +83,36 @@ class DiagnosticViewModel(
 
     /**
      * 亮螢幕本身就會解凍 GMS，所以要驗證解凍廣播是否有效，必須在螢幕關閉、GMS 已被凍結時送出。
-     * 按下後鎖螢幕，延遲結束才依序送出解凍與重連。本 App 必須設為省電「無限制」，否則自己也會被凍結。
+     * GMS 何時被凍結無法預測，所以在螢幕關閉期間每隔一段時間送一次，提高送出時 GMS 正好被凍結的機會，
+     * 事後再對照 Greezer 的紀錄。本 App 必須設為省電「無限制」，否則自己也會被凍結。
+     *
+     * 進行中再呼叫一次會取消。
      */
-    fun sendUnfreezeAndReconnectDelayed() {
-        if (_state.value.pendingDelayedSend) return
-        _state.update { it.copy(pendingDelayedSend = true) }
-        log("延遲測試已排定", "${DELAYED_SEND_SECONDS} 秒後送出解凍廣播，再等 ${RECONNECT_DELAY_MS / 1000} 秒送出重連廣播。請現在鎖定螢幕。")
-        viewModelScope.launch {
+    fun toggleDelayedTest() {
+        delayedTest?.takeIf { it.isActive }?.let {
+            it.cancel()
+            log("延遲測試已取消")
+            return
+        }
+        log(
+            "延遲測試已排定",
+            "請現在鎖定螢幕。${DELAYED_INTERVAL_MS / 1000} 秒後開始，每 ${DELAYED_INTERVAL_MS / 1000} 秒送出解凍，" +
+                "${RECONNECT_DELAY_MS / 1000} 秒後送出重連，共 $DELAYED_ROUNDS 次。",
+        )
+        delayedTest = viewModelScope.launch {
+            _state.update { it.copy(pendingDelayedSend = true, delayedRound = 0) }
             try {
-                delay(DELAYED_SEND_SECONDS * 1000L)
-                log("延遲測試：送出解凍廣播", describe(signals.sendUnfreeze()))
-                delay(RECONNECT_DELAY_MS)
-                log("延遲測試：送出重連廣播", describe(signals.sendReconnect()))
+                repeat(DELAYED_ROUNDS) { index ->
+                    val round = index + 1
+                    delay(DELAYED_INTERVAL_MS - if (index == 0) 0 else RECONNECT_DELAY_MS)
+                    _state.update { it.copy(delayedRound = round) }
+                    log("延遲測試 $round／$DELAYED_ROUNDS：解凍", describe(signals.sendUnfreeze()))
+                    delay(RECONNECT_DELAY_MS)
+                    log("延遲測試 $round／$DELAYED_ROUNDS：重連", describe(signals.sendReconnect()))
+                }
+                log("延遲測試完成")
             } finally {
-                _state.update { it.copy(pendingDelayedSend = false) }
+                _state.update { it.copy(pendingDelayedSend = false, delayedRound = 0) }
             }
         }
     }
@@ -186,7 +204,8 @@ class DiagnosticViewModel(
     companion object {
         private const val MAX_LOG = 500
         private const val LOG_VALUE_LIMIT = 400
-        private const val DELAYED_SEND_SECONDS = 60
+        private const val DELAYED_ROUNDS = 10
+        private const val DELAYED_INTERVAL_MS = 30_000L
         private const val RECONNECT_DELAY_MS = 2_000L
 
         val Factory = viewModelFactory {

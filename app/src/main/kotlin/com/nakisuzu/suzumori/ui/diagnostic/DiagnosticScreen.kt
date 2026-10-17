@@ -62,7 +62,7 @@ fun DiagnosticScreen(viewModel: DiagnosticViewModel) {
             cleanup = viewModel::cleanupTestWrites,
             sendUnfreeze = viewModel::sendUnfreeze,
             sendReconnect = viewModel::sendReconnect,
-            sendDelayed = viewModel::sendUnfreezeAndReconnectDelayed,
+            toggleDelayedTest = viewModel::toggleDelayedTest,
             openFcmDiagnostics = {
                 val error = SystemPages.openFcmDiagnostics(context)
                 viewModel.log(if (error == null) "已開啟 FCM 診斷" else "開啟 FCM 診斷失敗", error.orEmpty())
@@ -85,7 +85,7 @@ class DiagnosticActions(
     val cleanup: () -> Unit,
     val sendUnfreeze: () -> Unit,
     val sendReconnect: () -> Unit,
-    val sendDelayed: () -> Unit,
+    val toggleDelayedTest: () -> Unit,
     val openFcmDiagnostics: () -> Unit,
     val share: () -> Unit,
     val clearLog: () -> Unit,
@@ -115,7 +115,9 @@ private fun DiagnosticContent(state: DiagnosticUiState, actions: DiagnosticActio
         }
         item(key = "game") { Column { KeySection("com.miui.game.allowlist・夜間防線", state.game, selfMeaning = null) } }
         item(key = "writeTests") { Column { WriteTestSection(state.busy, state.baseline, actions) } }
-        item(key = "broadcasts") { Column { BroadcastSection(state.busy, state.pendingDelayedSend, actions) } }
+        item(key = "broadcasts") {
+            Column { BroadcastSection(state.busy, state.pendingDelayedSend, state.delayedRound, actions) }
+        }
         item(key = "receivers") { Column { ReceiverSection(state.receivers) } }
         item(key = "device") { Column { DeviceSection(state.canWrite, state.device) } }
         item(key = "logHeader") { Column { LogHeader(actions) } }
@@ -237,7 +239,7 @@ private fun WriteTestSection(busy: Boolean, baseline: GameAllowlistBaseline?, ac
 }
 
 @Composable
-private fun BroadcastSection(busy: Boolean, pendingDelayedSend: Boolean, actions: DiagnosticActions) {
+private fun BroadcastSection(busy: Boolean, pendingDelayedSend: Boolean, delayedRound: Int, actions: DiagnosticActions) {
     SectionTitle("解凍與重連")
     SectionCard {
         ActionRow(
@@ -253,14 +255,13 @@ private fun BroadcastSection(busy: Boolean, pendingDelayedSend: Boolean, actions
             onClick = actions.sendReconnect,
         )
         ActionRow(
-            title = if (pendingDelayedSend) "延遲測試進行中…" else "延遲測試：60 秒後解凍並重連",
+            title = if (pendingDelayedSend) "延遲測試進行中（$delayedRound／10）・點一下取消" else "延遲測試：鎖螢幕 5 分鐘",
             summary = if (pendingDelayedSend) {
-                "請保持螢幕關閉，60 秒後會送出解凍，再等 2 秒送出重連。"
+                "請保持螢幕關閉。每 30 秒送出解凍，2 秒後送出重連，共 10 次。"
             } else {
-                "先把本 App 設為省電「無限制」，按下後立刻鎖螢幕。"
+                "先把本 App 設為省電「無限制」。按下後立刻鎖螢幕，每 30 秒送出解凍並重連，共 10 次（約 5 分鐘）。"
             },
-            enabled = !pendingDelayedSend,
-            onClick = actions.sendDelayed,
+            onClick = actions.toggleDelayedTest,
         )
         ArrowPreference(
             title = "開啟 FCM 診斷",
