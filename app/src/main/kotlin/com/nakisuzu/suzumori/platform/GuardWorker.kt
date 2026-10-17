@@ -9,6 +9,7 @@ import com.nakisuzu.suzumori.core.guard.Trigger
 /** 每 15 分鐘的保底檢查，也順便把被系統停掉的常駐服務拉回來。 */
 class GuardWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        Diag.i("GuardWorker doWork")
         val container = (applicationContext as SuzumoriApp).container
         val config = container.configs.current()
         if (config.autoGuard) {

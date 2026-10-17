@@ -27,12 +27,14 @@ class SelfMonitor(
      * 每個程序啟動時呼叫一次。
      */
     suspend fun reportPreviousExits() {
+        Diag.i("reportPreviousExits start")
         val activityManager = context.getSystemService(ActivityManager::class.java)
         val since = states.current().lastExitReportedAtMillis ?: 0L
         val exits = runCatching { activityManager.getHistoricalProcessExitReasons(context.packageName, 0, MAX_EXITS) }
             .getOrDefault(emptyList())
             .filter { it.timestamp > since }
             .sortedBy { it.timestamp }
+        Diag.i("reportPreviousExits found ${exits.size} new")
         if (exits.isEmpty()) return
 
         for (exit in exits) {
@@ -63,6 +65,7 @@ class SelfMonitor(
             delay(TICK_MILLIS)
             val paused = detector.onTick(SystemClock.uptimeMillis()) ?: continue
             val seconds = paused / 1000
+            Diag.i("paused for about $seconds s")
             record(action = "本 App 曾被暫停", result = "約 $seconds 秒（期間 CPU 醒著，但本 App 沒有執行）")
             states.update {
                 it.copy(lastSelfIssue = ActionRecord(System.currentTimeMillis(), Trigger.SELF_MONITOR, "被暫停約 $seconds 秒"))

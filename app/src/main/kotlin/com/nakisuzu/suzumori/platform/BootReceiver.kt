@@ -21,6 +21,7 @@ class BootReceiver : BroadcastReceiver() {
             Intent.ACTION_MY_PACKAGE_REPLACED -> Trigger.PACKAGE_REPLACED
             else -> return
         }
+        Diag.i("BootReceiver ${intent.action}")
         val container = (context.applicationContext as SuzumoriApp).container
         val pending = goAsync()
         container.appScope.launch {
