@@ -7,7 +7,11 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 
 /** 記憶體中的 `Settings.System`。和真的 SettingsProvider 一樣沒有刪除 key 的途徑。 */
-class FakeSettingsStore(initial: Map<String, String?> = emptyMap()) : SettingsStore {
+class FakeSettingsStore(
+    initial: Map<String, String?> = emptyMap(),
+    /** 依序記錄 `read:key` 與 `write:key`，用來驗證操作順序。 */
+    private val timeline: MutableList<String> = mutableListOf(),
+) : SettingsStore {
     val values = initial.filterValues { it != null }.mapValues { it.value!! }.toMutableMap()
     val writes = mutableListOf<Pair<String, String>>()
     var writable = true
@@ -27,11 +31,13 @@ class FakeSettingsStore(initial: Map<String, String?> = emptyMap()) : SettingsSt
 
     override suspend fun read(key: String): String? {
         beforeRead(key)
+        timeline += "read:$key"
         return values[key]
     }
 
     override suspend fun write(key: String, value: String): Boolean {
         failure?.let { throw it }
+        timeline += "write:$key"
         writes += key to value
         val changed = values[key] != value
         values[key] = value
@@ -39,6 +45,8 @@ class FakeSettingsStore(initial: Map<String, String?> = emptyMap()) : SettingsSt
         afterWrite(key, value)
         return true
     }
+
+    fun writesTo(key: String) = writes.filter { it.first == key }.map { it.second }
 
     /** 模擬其他程式寫入，不計入 [writes]。 */
     fun externalWrite(key: String, value: String) {
