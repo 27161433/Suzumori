@@ -4,33 +4,46 @@
 
 不需要 root、Shizuku 或常駐 ADB，以一般 App 的身分運作，可以在關閉開發者選項的情況下使用。
 
-> **目前進度：第 0 階段（可行性診斷版）。**
-> 這一版只有一個診斷頁面，用來確認一般 App 身分能不能寫入兩份名單、能不能送出解凍與重連廣播。
-> 還沒有自動守護、常駐服務與開機啟動。
+## 功能
+
+- **自動守護**：GMS 被移出豁免名單時立即補回。監聽名單變化、螢幕開關、開機（含解鎖前）、App 更新，另外每 15 分鐘保底檢查一次。
+- **HyperOS 4 夜間保護**：把 GMS（以及本 App）加入遊戲白名單，避免夜間凍結。
+- **解凍並重連**：補回名單後解凍 GMS 並請它重新連線。App 內與快速設定磚都可以手動執行。
+- **事件紀錄**：保存最近 2000 筆名單改寫、修補與廣播的紀錄，可匯出成純文字，用來觀察 PowerKeeper 與 Joyose 改寫名單的頻率和時間點。
+- **解除安裝前清理**：只移除本 App 加入的項目。
 
 ## 運作原理
 
 陸版 HyperOS 的凍結機制（Greezer）會在螢幕關閉後很快凍結 GMS，FCM 連線因此中斷。Suzumori 利用系統本身的兩份豁免名單，以及一個解凍廣播來對抗它。
 
-### 白天：`MILLET_NO_RESTRICT_APP`
+### `MILLET_NO_RESTRICT_APP`：白天防線
 
 - `Settings.System` 中以逗號分隔的套件名單。Greezer 在多條凍結路徑上會先查這份名單，名單內的 App 不會被凍結。
+- **GMS 專用限制器只看這份名單**：螢幕關閉後 GMS 一有活動，約 10 秒就會被快速凍結。實測遊戲白名單擋不住這條路徑。
 - 這份名單由 PowerKeeper 從自己的資料庫產生，每次重建都會整串覆寫，把 GMS 洗掉。重建時機包括開機、安裝或移除 App、使用者修改任何 App 的省電策略等。
 - 所以它沒辦法永久生效，只能監聽變化、立刻補回。補回時保留所有既有項目，只在 GMS 不存在時追加。
 
-### 夜間：`com.miui.game.allowlist`
+### `com.miui.game.allowlist`：夜間防線
 
-- HyperOS 4 在 23:00 到 07:59、螢幕關閉且裝置 idle 時，會讓上面那份名單失效（原因標記為 `nightDoze`）。
-- 遊戲預下載豁免名單（`Settings.System`，以底線分隔）在凍結前會被檢查，名單內的 App 一律拒絕凍結，而且沒有時段限制。
-- 系統開機時不會主動讀取這個值，只在值改變時載入。所以每次開機後要在結尾加上或移除一個底線，讓字串改變、成員不變，觸發系統重新載入。
+- HyperOS 4 在 23:00 到 07:59、螢幕關閉且裝置 idle 時，會讓「無限制」名單失效（凍結原因標記為 `nightDoze`）。
+- 遊戲預下載豁免名單（`Settings.System`，以底線分隔）會在 `freezeUid` 凍結前被檢查，名單內的 App 會被拒絕凍結，而且沒有時段限制。實測可以擋下螢幕關閉後的凍結。
+- 系統開機時不會主動讀取這個值，只在值改變時載入。所以每次開機後，Suzumori 會在結尾加上或移除一個底線，讓字串改變、成員不變，觸發系統重新載入。
 - 安全中心和 Joyose 也會寫這份名單，有時會整串清空。Suzumori 會保留它們的項目，被清掉時補回。
 
 ### 解凍與重連
 
 - 加入名單**不會解凍**已經被凍結的 GMS。
-- 解凍：送廣播 `com.xiaomi.mipush.REFRESH_WHITE_LIST_ACTION` 給 `android`，帶 `pkgName=com.google.android.gms`、`option=-1`。系統會先解凍 GMS 在主使用者下的 UID，`-1` 不會改動任何 MiPush 名單。
-- 重連：等 1 到 2 秒後，送 `GCM_RECONNECT` 與 `MCS_HEARTBEAT`／`GTALK_HEARTBEAT` 心跳給 GMS。
-- `sendBroadcast()` 沒有拋出例外只代表「已送出」，不代表對方有收到。是否真的生效，要開 FCM 診斷頁面確認。
+- 解凍：送廣播 `com.xiaomi.mipush.REFRESH_WHITE_LIST_ACTION` 給 `android`，帶 `pkgName=com.google.android.gms`、`option=-1`。系統會解凍 GMS 在主使用者下的 UID，`-1` 不會改動任何 MiPush 名單。實測一般 App 送出後，Greezer 會在同一秒解凍 GMS。
+- 重連：等約 1.5 秒後，送 `GCM_RECONNECT` 與 `MCS_HEARTBEAT` 給 GMS。
+- 只解凍不夠：MILLET 沒有 GMS 時，解凍後 5 到 18 秒就會被重新凍結。所以 Suzumori 一律先補回名單再解凍。
+- 只在有修補、開機後第一次檢查，或使用者手動要求時才送廣播。名單都正常時只讀取，不寫入也不送廣播。
+- `sendBroadcast()` 沒有拋出例外只代表「已送出」，不代表對方有收到。是否真的連上，要開 FCM 診斷頁面確認。
+
+### 防止失控
+
+- 所有操作依序執行，不會互相衝突。自己的寫入也會觸發監聽，但下一次檢查會讀到正常狀態而結束，不會形成迴圈。
+- 寫入前會再讀一次最新值，寫入後讀回驗證；驗證失敗最多重試 3 次，每次重試前等待更久。
+- 每分鐘最多修補 10 次，超過時記錄下來並暫停 5 分鐘，避免和其他程式無限互相覆寫。
 
 ### 為什麼 targetSdk 固定為 22
 
@@ -52,48 +65,64 @@ Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻�
 
 更新版本時，簽章必須和已安裝的版本相同。debug 版與 release 版的簽章不同，要互換時必須先解除安裝，**解除安裝前請先做清理**（見下方）。
 
-## 設定步驟（第 0 階段）
+## 設定步驟
 
 1. 第一次開啟時，系統會先列出一長串權限（取得應用程式清單、桌面捷徑、剪貼簿等）。
    這是系統對所有舊版 App（targetSdk 低於 23）強制顯示的審查畫面，**不是 Suzumori 申請的權限**，App 也無法略過它。
-   全部保持關閉，直接按「確定」即可。Suzumori 實際只需要「修改系統設定」，進入 App 後會引導開啟。
+   全部保持關閉，直接按「確定」即可。
 2. 系統會提示「此應用程式專為舊版 Android 打造」，按「確定」即可，這同樣是 targetSdk 22 的正常現象。
-3. 「寫入權限」顯示「未開啟」時，按「前往授權頁」開啟「修改系統設定」，再回到 App。
-   HyperOS 安裝後預設是關閉的，需要手動開啟一次。
-4. 依序測試各個按鈕，最後用「分享診斷報告」把整份結果傳出來。
+3. 最上方出現「寫入權限未開啟」時，點它開啟「修改系統設定」，再回到 App。HyperOS 安裝後預設是關閉的。
+4. 最上方出現「本 App 尚未設為省電『無限制』」時，點它進入本 App 的設定：
+   - 「省電策略」設為「無限制」。
+   - 開啟「自啟動」。沒有自啟動，小米不會在開機時通知本 App。
+5. 系統詢問是否允許通知時，建議允許。常駐通知是低重要性、無聲的，用來讓 Suzumori 在背景即時反應。
+6. 可以把「解凍並重連」快速設定磚加到控制中心，推播延遲時一鍵處理。
+
+## 開關
+
+| 開關 | 預設 | 說明 |
+|---|---|---|
+| 自動守護 | 開 | 關閉後只在手動操作時檢查 |
+| HyperOS 4 夜間保護 | 開 | 維護遊戲白名單中的 GMS。關閉時只移除本 App 加入的項目 |
+| 本 App 加入遊戲白名單 | 開 | 夜間「無限制」名單失效，本 App 也可能被凍結；Joyose 可能在半夜清空遊戲白名單。本 App 被凍結就無法補回名單 |
+| 常駐通知 | 開 | 以前景服務常駐。實測沒有前景服務時，背景收到名單變化會延後約 10 秒 |
 
 ## 限制
 
 - 一般 App 讀不到 FCM 連線狀態（Android 10 起讀不到 `/proc/net/tcp`），所以 Suzumori 無法知道 GMS 是否被凍結或連線是否中斷，只能在已知的時機主動解凍和重連。
 - 名單被覆寫到 Suzumori 補回之間，仍有短暫的空窗。系統沒有原子操作，和 PowerKeeper、安全中心、Joyose 的競爭無法完全避免。
+- 不使用 wake lock 和精確鬧鐘。螢幕關閉、CPU 休眠時，等待時間會被拉長；每 15 分鐘的保底檢查也可能延後到系統的維護時段。
+- 夜間時段 GMS 專用限制器是否仍然遵守「無限制」名單，尚未驗證。
 - 只保護主使用者。系統只看主使用者的設定值，解凍廣播也只對主使用者有效，分身空間不在範圍內。
-- Suzumori 本身也可能被凍結或被殺掉。之後的版本會引導把本 App 設為省電「無限制」並開啟自啟動。
-- 不能關閉 Greezer 的 GMS 限制器（需要 DUMP 權限），也不能修改其他 App 的自啟動、省電策略等設定。
+- 不能關閉 Greezer 的 GMS 限制器（需要 DUMP 權限），也不能替使用者修改其他 App 的自啟動、省電策略等設定。
 - 含有底線的套件名稱無法放進遊戲白名單。
 
 ## 解除安裝前的清理
 
 **請在解除安裝之前先清理。** 解除安裝後 App 就沒有機會再執行清理，留在遊戲白名單中的項目會一直讓 GMS 免於凍結。
 
-- 在第 0 階段的診斷頁按「清理測試寫入」。
-- 清理只移除遊戲白名單中**本 App 加入的項目**（依第一次寫入前記錄的基準判斷），其他程式的項目會保留。
-- 沒有剩下任何項目時寫入空字串，不會刪除 key。直接刪除 key 時系統不會清除快取，被移除的項目會繼續受到保護。
-- `MILLET_NO_RESTRICT_APP` 不需要清理，PowerKeeper 下次重建名單時會自然移除 GMS。
+1. 在 App 最下方按「解除安裝前清理」，確認後執行。
+2. 清理會停止自動守護與夜間保護，並從遊戲白名單移除**本 App 當初加入的項目**（依第一次寫入前記錄的基準判斷），其他程式的項目會保留。
+3. 沒有剩下任何項目時寫入空字串，不會刪除 key。直接刪除 key 時系統不會清除快取，被移除的項目會繼續受到保護。
+4. 完成後可以直接點「前往解除安裝」。
 
-如果已經解除安裝而沒有清理，可以重新安裝後再清理；但基準紀錄會隨解除安裝消失，這時只能用 ADB 手動修改：
+`MILLET_NO_RESTRICT_APP` 不需要清理，PowerKeeper 下次重建名單時會自然移除 GMS。
+
+如果已經解除安裝而沒有清理，基準紀錄會隨解除安裝消失，只能用 ADB 手動修改：
 
 ```
 adb shell settings get system com.miui.game.allowlist
-adb shell settings put system com.miui.game.allowlist "<移除 com.google.android.gms 之後剩下的值>"
+adb shell settings put system com.miui.game.allowlist "<移除 com.google.android.gms 與 com.nakisuzu.suzumori 之後剩下的值>"
 ```
 
-只剩 GMS 時寫入空字串 `""`，不要用 `settings delete`。
+沒有剩下項目時寫入空字串 `""`，不要用 `settings delete`。
 
 ## 依賴
 
 - 只使用 Google（AndroidX、Jetpack）與 JetBrains（Kotlin、kotlinx）官方的函式庫，**唯一的例外**是介面：
-  - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：HyperOS 風格的 Compose 元件、毛玻璃效果。
+  - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：HyperOS 風格的 Compose 元件、毛玻璃效果與圖示。
   - 它所依賴的 [MaterialKolor](https://github.com/jordond/materialkolor)（MIT）。
+- 權限只有 `WRITE_SETTINGS`、`RECEIVE_BOOT_COMPLETED`、`FOREGROUND_SERVICE`、`POST_NOTIFICATIONS`。
 - 沒有 `INTERNET` 權限，也沒有任何分析、統計或錯誤回報 SDK。
 
 ## 建置
