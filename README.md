@@ -56,6 +56,7 @@
 | HyperOS 4 的夜間凍結 | 本 App 也加入遊戲白名單 |
 | Android 本身凍結背景暫存程序 | 前景服務讓程序不會進入暫存狀態 |
 | 程序被殺掉 | 自啟動、服務自動重啟、每 15 分鐘的保底檢查 |
+| 從多工畫面滑掉 | 實測 HyperOS 會結束程序，但約 1 秒內就重新建立服務，守護隨即恢復 |
 
 狀態頁的「本 App 運作狀況」與事件紀錄會記下：
 
@@ -139,6 +140,20 @@ adb shell settings put system com.miui.game.allowlist "<移除 com.google.androi
 ```
 
 沒有剩下項目時寫入空字串 `""`，不要用 `settings delete`。
+
+## 疑難排解
+
+開啟 USB 偵錯或無線偵錯後，可以用以下指令查看 Suzumori 的診斷訊息（服務的生命週期、每次檢查的觸發原因與耗時，不含名單內容）：
+
+```
+adb logcat -s Suzumori
+```
+
+查看系統是否凍結過 GMS 或本 App（重新開機後紀錄會清空）：
+
+```
+adb shell dumpsys greezer
+```
 
 ## 依賴
 
