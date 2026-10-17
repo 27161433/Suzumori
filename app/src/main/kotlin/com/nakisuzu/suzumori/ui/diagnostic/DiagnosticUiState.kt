@@ -17,6 +17,10 @@ data class DiagnosticUiState(
     val pendingDelayedSend: Boolean = false,
     /** 新的在前。 */
     val log: List<LogEntry> = emptyList(),
+    /** 剛完成的操作結果，以對話框顯示；null 表示沒有要顯示的結果。 */
+    val lastResult: LogEntry? = null,
+    /** 結果對話框是否展開。關閉動畫結束後才清除 [lastResult]。 */
+    val resultVisible: Boolean = false,
 )
 
 data class KeyState(

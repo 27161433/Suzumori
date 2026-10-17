@@ -1,16 +1,14 @@
 package com.nakisuzu.suzumori.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import top.yukonga.miuix.kmp.theme.ColorSchemeMode
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.ThemeController
 
-/** 深色模式跟隨系統。minSdk 33 一定支援 Material You 動態配色（Android 12 起）。 */
+/** HyperOS 預設配色（藍色主色），深色模式跟隨系統。 */
 @Composable
 fun SuzumoriTheme(content: @Composable () -> Unit) {
-    val context = LocalContext.current
-    val colorScheme = if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    MaterialTheme(colorScheme = colorScheme, content = content)
+    val controller = remember { ThemeController(ColorSchemeMode.System) }
+    MiuixTheme(controller = controller, content = content)
 }

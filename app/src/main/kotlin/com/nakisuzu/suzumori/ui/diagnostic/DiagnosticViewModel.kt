@@ -99,19 +99,25 @@ class DiagnosticViewModel(
         }
     }
 
-    fun log(title: String, detail: String = "") {
+    fun log(title: String, detail: String = ""): LogEntry {
         val entry = LogEntry(nextLogId.getAndIncrement(), System.currentTimeMillis(), title, detail)
         _state.update { it.copy(log = (listOf(entry) + it.log).take(MAX_LOG)) }
+        return entry
     }
 
     fun clearLog() = _state.update { it.copy(log = emptyList()) }
+
+    fun dismissResult() = _state.update { it.copy(resultVisible = false) }
+
+    fun clearResult() = _state.update { if (it.resultVisible) it else it.copy(lastResult = null) }
 
     private fun runAction(title: String, action: suspend () -> String) {
         if (_state.value.busy) return
         _state.update { it.copy(busy = true) }
         viewModelScope.launch {
             try {
-                log(title, action())
+                val entry = log(title, action())
+                _state.update { it.copy(lastResult = entry, resultVisible = true) }
             } finally {
                 _state.update { it.copy(busy = false) }
                 refresh()
@@ -130,7 +136,7 @@ class DiagnosticViewModel(
             state.copy(millet = bump(state.millet), game = bump(state.game))
         }
         val value = settings.read(key)
-        log("觀察到 $key 變更", "目前的值：${DiagnosticReport.quote(value, LOG_VALUE_LIMIT)}")
+        log("觀察到 $key 變更", "目前的值：\n  ${DiagnosticReport.quote(value, LOG_VALUE_LIMIT)}")
         _state.update { it.copy(millet = readKeyFrom(it.millet, key, value), game = readKeyFrom(it.game, key, value)) }
     }
 
@@ -153,11 +159,15 @@ class DiagnosticViewModel(
         appendLine("key：${report.key}")
         appendLine("動作：${report.action.label}")
         report.note?.let { appendLine("說明：$it") }
-        appendLine("寫入前：${DiagnosticReport.quote(report.before, LOG_VALUE_LIMIT)}")
+        // 名單的值通常很長，放在標籤下一行並縮排，避免等寬字型把標籤折斷。
+        appendLine("寫入前：")
+        appendLine("  ${DiagnosticReport.quote(report.before, LOG_VALUE_LIMIT)}")
         if (report.written != null) {
-            appendLine("寫入值：${DiagnosticReport.quote(report.written, LOG_VALUE_LIMIT)}")
+            appendLine("寫入值：")
+            appendLine("  ${DiagnosticReport.quote(report.written, LOG_VALUE_LIMIT)}")
             appendLine("putString 回傳：${report.putResult ?: "（拋出例外，沒有回傳值）"}")
-            appendLine("讀回：${DiagnosticReport.quote(report.readBack, LOG_VALUE_LIMIT)}")
+            appendLine("讀回：")
+            appendLine("  ${DiagnosticReport.quote(report.readBack, LOG_VALUE_LIMIT)}")
             appendLine("讀回與寫入值相同：${if (report.readBackMatches) "是" else "否"}")
         }
         val gmsAfter = if (report.key == SettingKeys.MILLET_NO_RESTRICT_APP) {
@@ -170,7 +180,7 @@ class DiagnosticViewModel(
     }
 
     private fun describe(results: List<SendResult>): String = results.joinToString("\n") { result ->
-        "${result.label}：${result.error?.let { "拋出例外 $it" } ?: "已送出（無法確認對方是否收到）"}"
+        "${result.label}\n  ${result.error?.let { "拋出例外 $it" } ?: "已送出（無法確認對方是否收到）"}"
     }
 
     companion object {

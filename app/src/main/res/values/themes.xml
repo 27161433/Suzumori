@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 只負責 Compose 畫出來之前的視窗外觀，其餘配色都在 Compose 的 Material 3 主題。 -->
-    <style name="Theme.Suzumori" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- 只負責 Compose 畫出來之前的視窗外觀，底色對齊 miuix 的 surface，避免啟動時閃爍。 -->
+    <style name="Theme.Suzumori" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>
