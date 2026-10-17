@@ -38,7 +38,8 @@
 
 ## 安裝
 
-Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻是 24），直接點 APK 安裝可能失敗，錯誤是 `INSTALL_FAILED_DEPRECATED_SDK_VERSION`。
+Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻是 24），錯誤是 `INSTALL_FAILED_DEPRECATED_SDK_VERSION`。
+實測陸版 HyperOS 4（OS4.0.4.0，Android 17）沒有啟用這個限制，`adb install` 不加任何參數就能安裝。
 
 1. 先試著直接在手機上點 APK 安裝。
 2. 如果被擋，暫時開啟開發者選項與 USB 偵錯（或無線偵錯），在電腦上執行一次：
@@ -53,9 +54,12 @@ Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻�
 
 ## 設定步驟（第 0 階段）
 
-1. 第一次開啟時，系統會先顯示權限審查畫面（舊版 App 的標準流程），按「繼續」。
-2. 系統會提示「此應用程式專為舊版 Android 打造」，按「確定」即可，這是 targetSdk 22 的正常現象。
-3. 確認「寫入權限」顯示「已開啟」。如果沒有，按「前往授權頁」開啟「修改系統設定」。
+1. 第一次開啟時，系統會先列出一長串權限（取得應用程式清單、桌面捷徑、剪貼簿等）。
+   這是系統對所有舊版 App（targetSdk 低於 23）強制顯示的審查畫面，**不是 Suzumori 申請的權限**，App 也無法略過它。
+   全部保持關閉，直接按「確定」即可。Suzumori 實際只需要「修改系統設定」，進入 App 後會引導開啟。
+2. 系統會提示「此應用程式專為舊版 Android 打造」，按「確定」即可，這同樣是 targetSdk 22 的正常現象。
+3. 「寫入權限」顯示「未開啟」時，按「前往授權頁」開啟「修改系統設定」，再回到 App。
+   HyperOS 安裝後預設是關閉的，需要手動開啟一次。
 4. 依序測試各個按鈕，最後用「分享診斷報告」把整份結果傳出來。
 
 ## 限制
