@@ -16,7 +16,7 @@ object EventLogText {
         appendLine("共 ${entries.size} 筆")
         appendLine()
         for (entry in entries) {
-            appendLine("${formatTime(entry.timeMillis)}　[${entry.trigger}]${entry.key?.let { " $it" }.orEmpty()}")
+            appendLine("${formatTime(entry.timeMillis)} [${entry.trigger}]${entry.key?.let { " $it" }.orEmpty()}")
             appendLine("  動作：${entry.action}")
             appendLine("  結果：${entry.result}")
             entry.before?.let { appendLine("  修改前：\"$it\"") }
