@@ -49,10 +49,12 @@
             android:value="3.0" />
 
         <!-- 深淺色與語言切換都不重建頁面：重建會讓整個畫面閃一下。
-             Compose 會依新的設定重新組成，深淺色漸變配色、文字直接換成新的語言（見 MainActivity.onConfigurationChanged）。 -->
+             Compose 會依新的設定重新組成，深淺色漸變配色、文字直接換成新的語言（見 MainActivity.onConfigurationChanged）。
+             screenLayout：targetSdk 22 的 App 一開始帶有螢幕相容旗標（compactNeeded），
+             第一次套用單一 App 語言時系統會清掉它，算成 screenLayout 變更；沒有宣告的話第一次切換語言仍會重建。 -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="uiMode|locale|layoutDirection"
+            android:configChanges="uiMode|locale|layoutDirection|screenLayout"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
