@@ -89,7 +89,7 @@ object SystemPages {
 
     private fun packageUri(context: Context): Uri = Uri.fromParts("package", context.packageName, null)
 
-    const val SOURCE_URL = "https://github.com/OWNER/Suzumori"
+    const val SOURCE_URL = "https://github.com/27161433/Suzumori"
     const val LICENSE_NAME = "GPL-3.0"
 
     private const val ACTION_MIUI_APP_DETAIL = "miui.intent.action.APP_MANAGER_APPLICATION_DETAIL"

@@ -1,0 +1,68 @@
+name: 問題回報 / Bug report
+description: 通知仍然延遲、App 行為異常或閃退 / Notifications still delayed, unexpected behavior or crashes
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感謝回報！請盡量填寫完整，越詳細越容易找出原因。安全性問題請改用 [SECURITY.md](https://github.com/27161433/Suzumori/blob/main/SECURITY.md) 的方式私下回報。
+        Thanks for reporting! The more detail, the easier it is to find the cause. For security problems, report privately as described in SECURITY.md.
+  - type: textarea
+    id: description
+    attributes:
+      label: 發生了什麼 / What happened
+      description: 包含你預期的結果與實際的結果。/ Include what you expected and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 重現步驟 / Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: input
+    id: device
+    attributes:
+      label: 手機型號 / Phone model
+      placeholder: Xiaomi 17 Pro Max
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: 系統版本 / System version
+      description: 「關於」頁的系統版本 / System version on the About page
+      placeholder: OS4.0.4.0.XPBCNXM
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Suzumori 版本 / Suzumori version
+      description: 「關於」頁的版本 / Version on the About page
+      placeholder: 1.0.0 (5)
+    validations:
+      required: true
+  - type: checkboxes
+    id: setup
+    attributes:
+      label: 設定確認 / Setup checklist
+      options:
+        - label: 已開啟「修改系統設定」 / "Modify system settings" is on
+        - label: 省電策略已設為「無限制」 / Battery saver is set to "No restrictions"
+        - label: 已開啟「自啟動」 / "Autostart" is on
+  - type: textarea
+    id: log
+    attributes:
+      label: 事件紀錄 / Event log
+      description: |
+        事件紀錄頁右上角匯出的紀錄，可以直接把檔案拖進來。紀錄包含名單內容（例如設為「無限制」的 App 套件名稱），上傳前請自行檢查。
+        The log exported from the top right of the event log page; you can drag the file in. It contains list contents (such as package names of apps set to "No restrictions"), so review it before uploading.
+  - type: textarea
+    id: adb
+    attributes:
+      label: logcat / dumpsys（選填 / optional）
+      description: "`adb logcat -s Suzumori`、`adb shell dumpsys greezer`"
+      render: text

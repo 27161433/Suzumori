@@ -1,17 +1,97 @@
-# Suzumori（鈴守）
+<p align="center">
+  <img src="app/src/main/res/drawable-nodpi/about_artwork.png" width="160" alt="Suzumori">
+</p>
 
-在陸版 HyperOS 上守護 Google Play 服務（GMS）不被凍結，讓 FCM 推播準時送達。
+<h1 align="center">Suzumori（鈴守）</h1>
+
+<p align="center">在陸版 HyperOS 上守護 Google Play 服務（GMS）不被凍結，讓 FCM 推播準時送達。</p>
+
+<p align="center">
+  <b>繁體中文</b> ・ <a href="README.zh-CN.md">简体中文</a> ・ <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/27161433/Suzumori/releases/latest"><img src="https://img.shields.io/github/v/release/27161433/Suzumori" alt="Release"></a>
+  <a href="https://github.com/27161433/Suzumori/actions/workflows/ci.yml"><img src="https://github.com/27161433/Suzumori/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/27161433/Suzumori" alt="License: GPL-3.0"></a>
+  <img src="https://img.shields.io/badge/Android-13%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 13+">
+</p>
 
 不需要 root、Shizuku 或常駐 ADB，以一般 App 的身分運作，可以在關閉開發者選項的情況下使用。
 
+| 首頁 | 事件紀錄 | 設定 | 關於 |
+|---|---|---|---|
+| <img src="docs/screenshots/zh-TW-home.jpg" width="200"> | <img src="docs/screenshots/zh-TW-events.jpg" width="200"> | <img src="docs/screenshots/zh-TW-settings.jpg" width="200"> | <img src="docs/screenshots/zh-TW-about.jpg" width="200"> |
+
+## 適用對象
+
+- 使用**陸版（中國大陸版）HyperOS** 的小米、Redmi 手機，並自行安裝了 Google Play 服務。
+- 常遇到 Gmail、Telegram、Discord 等依賴 FCM 的 App 通知延遲，打開 App 才一次湧進來。
+- Android 13 以上。實測環境是 Xiaomi 17 Pro Max、HyperOS OS4.0.4.0.XPBCNXM（Android 17）。
+
+國際版 HyperOS 沒有這個凍結機制，不需要本 App。
+
 ## 功能
 
-- **自動守護**：GMS 被移出豁免名單時立即補回。監聽名單變化、螢幕開關、開機（含解鎖前）、App 更新，另外每 15 分鐘保底檢查一次。
-- **HyperOS 4 夜間保護**：把 GMS（以及本 App）加入遊戲白名單，避免夜間凍結。
+- **自動守護**：GMS 被移出豁免名單時立即補回。監聽名單變化、螢幕開關、開機（含解鎖前）、App 更新，另外每 15 分鐘保底檢查一次。總開關在首頁的圓環中。
+- **夜間守護**：把 GMS（以及本 App）加入遊戲白名單，避免 HyperOS 4 夜間凍結。
 - **解凍並重連**：補回名單後解凍 GMS 並請它重新連線。App 內與快速設定磚都可以手動執行。
 - **事件紀錄**：保存最近 2000 筆名單改寫、修補與廣播的紀錄，可匯出成純文字，用來觀察 PowerKeeper 與 Joyose 改寫名單的頻率和時間點。
-- **自我監測**：記錄本 App 是否曾被凍結，以及程序被結束的原因。
+- **自我監測**：記錄本 App 是否曾被凍結、程序被結束的原因，以及被結束後是否自動重新啟動。
+- **權限提示**：寫入權限、省電策略、自啟動沒設定好時，首頁直接提示，點一下就到對應的系統頁面。
+- **介面**：繁體中文、简体中文、English，以及淺色、深色主題，都可以在設定中切換。常駐通知可選系統預設、固定位置（置頂或置底）或可收納。
 - **解除安裝前清理**：只移除本 App 加入的項目。
+
+## 下載與安裝
+
+到 [Releases](https://github.com/27161433/Suzumori/releases/latest) 下載最新的 `Suzumori-<版本>.apk`。
+
+Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻是 24），錯誤是 `INSTALL_FAILED_DEPRECATED_SDK_VERSION`。
+實測陸版 HyperOS 4（OS4.0.4.0，Android 17）沒有啟用這個限制，可以直接安裝。
+
+1. 先試著直接在手機上點 APK 安裝。
+2. 如果被擋，暫時開啟開發者選項與 USB 偵錯（或無線偵錯），在電腦上執行一次：
+
+   ```
+   adb install --bypass-low-target-sdk-block Suzumori-1.0.0.apk
+   ```
+
+3. 裝好之後就可以關掉開發者選項，之後不再需要 ADB。
+
+更新版本時，簽章必須和已安裝的版本相同。自行建置的 debug 版與 Releases 上的版本簽章不同，要互換時必須先解除安裝，**解除安裝前請先做清理**（見下方）。
+
+Releases 上的 APK 都以同一把金鑰簽署，可以用 `apksigner verify --print-certs` 確認憑證：
+
+```
+CN=Suzumori, O=nakisuzu
+SHA-256: 70706052f2e2a469afc178304ae36cbbfae6973dab19f8ef8e73e8e36a674339
+```
+
+## 設定步驟
+
+1. 第一次開啟時，系統會先列出一長串權限（取得應用程式清單、桌面捷徑、剪貼簿等）。
+   這是系統對所有舊版 App（targetSdk 低於 23）強制顯示的審查畫面，**不是 Suzumori 申請的權限**，App 也無法略過它。
+   全部保持關閉，直接按「確定」即可。
+2. 系統會提示「此應用程式專為舊版 Android 打造」，按「確定」即可，這同樣是 targetSdk 22 的正常現象。
+3. 首頁出現「寫入權限未開啟」時，點「前往開啟」打開「修改系統設定」，再回到 App。HyperOS 安裝後預設是關閉的。
+4. 出現「省電策略未設為『無限制』」時，點「前往設定」會直接開啟本 App 的省電策略頁，選「無限制」。
+5. 出現「自啟動未開啟」時，點「前往開啟」進入應用管理，開啟「自啟動」。沒有自啟動，小米不會在開機時通知本 App。
+6. 系統詢問是否允許通知時，建議允許。常駐通知是低重要性、無聲的，用來讓 Suzumori 在背景即時反應。
+7. 可以把「解凍並重連」快速設定磚加到控制中心，推播延遲時一鍵處理。
+
+「關於」頁可以隨時確認這三項設定，點任一項都會開啟對應的系統頁面。
+
+## 設定一覽
+
+| 位置 | 項目 | 預設 | 說明 |
+|---|---|---|---|
+| 首頁 | 自動守護（圓環中的開關） | 開 | 關閉後只在手動操作時檢查 |
+| 設定 | 語言 | 跟隨系統 | 繁體中文、简体中文、English，也可以在系統設定的「App 語言」修改 |
+| 設定 | App 主題 | 跟隨系統 | 淺色、深色 |
+| 設定 | 常駐通知樣式 | 系統預設 | 固定位置：固定在通知欄最上方或最下方。可收納：長按通知可以收納到「更多通知」 |
+| 設定 | 夜間守護 | 開 | 維護遊戲白名單中的 GMS。關閉時只移除本 App 加入的項目 |
+| 設定 | 本 App 也加入遊戲白名單 | 開 | 夜間「無限制」名單失效，本 App 也可能被凍結；Joyose 可能在半夜清空遊戲白名單。本 App 被凍結就無法補回名單 |
+| 設定 | 常駐通知 | 開 | 以前景服務常駐。實測沒有前景服務時，背景收到名單變化會延後約 10 秒 |
 
 ## 運作原理
 
@@ -38,7 +118,7 @@
 - 重連：等約 1.5 秒後，送 `GCM_RECONNECT` 與 `MCS_HEARTBEAT` 給 GMS。
 - 只解凍不夠：MILLET 沒有 GMS 時，解凍後 5 到 18 秒就會被重新凍結。所以 Suzumori 一律先補回名單再解凍。
 - 只在有修補、開機後第一次檢查，或使用者手動要求時才送廣播。名單都正常時只讀取，不寫入也不送廣播。
-- `sendBroadcast()` 沒有拋出例外只代表「已送出」，不代表對方有收到。是否真的連上，要開 FCM 診斷頁面確認。
+- `sendBroadcast()` 沒有拋出例外只代表「已送出」，不代表對方有收到。是否真的連上，要開 FCM 診斷頁面確認（首頁右上角）。
 
 ### 防止失控
 
@@ -58,58 +138,15 @@
 | 程序被殺掉 | 自啟動、服務自動重啟、每 15 分鐘的保底檢查 |
 | 從多工畫面滑掉 | 實測 HyperOS 會結束程序，但約 1 秒內就重新建立服務，守護隨即恢復 |
 
-狀態頁的「本 App 運作狀況」與事件紀錄會記下：
+首頁的「運作狀況」與事件紀錄會記下：
 
 - **曾被暫停**：以 uptime 計時判斷。CPU 休眠時 uptime 不會前進，所以裝置休眠不會被誤判。
-- **程序被結束**：原因來自系統的 `getHistoricalProcessExitReasons`。
-
-**不使用無障礙服務與裝置管理員。** 實機上 Greezer 的豁免原因只有系統 App、無限制名單、雲端白名單、前景 App、桌布、輸入法、系統 App 的前景服務等，沒有任何與無障礙服務或裝置管理員相關的豁免，所以兩者都擋不住凍結。另外：
-
-- 不少銀行與支付 App 偵測到第三方無障礙服務會拒絕執行。
-- 無障礙服務能讀取整個畫面，安全風險高。
-- 裝置管理員只會讓 App 更難解除安裝。
+- **程序被結束**：原因來自系統的 `getHistoricalProcessExitReasons`。被結束後 10 秒內就重新啟動，視為正常。
+- **程序啟動**：原因來自系統的 `getHistoricalProcessStartReasons`（Android 15 以上），可以確認被結束後有沒有自動重新啟動。
 
 ### 為什麼 targetSdk 固定為 22
 
 一般 App 寫入非公開的 `Settings.System` key 時，targetSdk 23 以上會被拋出 `IllegalArgumentException`；targetSdk 22 以下只要持有 `WRITE_SETTINGS`，系統只記錄警告並允許寫入。Suzumori 的核心功能完全依賴這個相容行為，所以 targetSdk **不能提高**。
-
-## 安裝
-
-Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻是 24），錯誤是 `INSTALL_FAILED_DEPRECATED_SDK_VERSION`。
-實測陸版 HyperOS 4（OS4.0.4.0，Android 17）沒有啟用這個限制，`adb install` 不加任何參數就能安裝。
-
-1. 先試著直接在手機上點 APK 安裝。
-2. 如果被擋，暫時開啟開發者選項與 USB 偵錯（或無線偵錯），在電腦上執行一次：
-
-   ```
-   adb install --bypass-low-target-sdk-block app-debug.apk
-   ```
-
-3. 裝好之後就可以關掉開發者選項，之後不再需要 ADB。
-
-更新版本時，簽章必須和已安裝的版本相同。debug 版與 release 版的簽章不同，要互換時必須先解除安裝，**解除安裝前請先做清理**（見下方）。
-
-## 設定步驟
-
-1. 第一次開啟時，系統會先列出一長串權限（取得應用程式清單、桌面捷徑、剪貼簿等）。
-   這是系統對所有舊版 App（targetSdk 低於 23）強制顯示的審查畫面，**不是 Suzumori 申請的權限**，App 也無法略過它。
-   全部保持關閉，直接按「確定」即可。
-2. 系統會提示「此應用程式專為舊版 Android 打造」，按「確定」即可，這同樣是 targetSdk 22 的正常現象。
-3. 最上方出現「寫入權限未開啟」時，點它開啟「修改系統設定」，再回到 App。HyperOS 安裝後預設是關閉的。
-4. 最上方出現「本 App 尚未設為省電『無限制』」時，點它進入本 App 的設定：
-   - 「省電策略」設為「無限制」。
-   - 開啟「自啟動」。沒有自啟動，小米不會在開機時通知本 App。
-5. 系統詢問是否允許通知時，建議允許。常駐通知是低重要性、無聲的，用來讓 Suzumori 在背景即時反應。
-6. 可以把「解凍並重連」快速設定磚加到控制中心，推播延遲時一鍵處理。
-
-## 開關
-
-| 開關 | 預設 | 說明 |
-|---|---|---|
-| 自動守護 | 開 | 關閉後只在手動操作時檢查 |
-| HyperOS 4 夜間保護 | 開 | 維護遊戲白名單中的 GMS。關閉時只移除本 App 加入的項目 |
-| 本 App 加入遊戲白名單 | 開 | 夜間「無限制」名單失效，本 App 也可能被凍結；Joyose 可能在半夜清空遊戲白名單。本 App 被凍結就無法補回名單 |
-| 常駐通知 | 開 | 以前景服務常駐。實測沒有前景服務時，背景收到名單變化會延後約 10 秒 |
 
 ## 限制
 
@@ -125,8 +162,8 @@ Android 14 起，AOSP 會擋下 targetSdk 過舊的 App（Android 15 起門檻�
 
 **請在解除安裝之前先清理。** 解除安裝後 App 就沒有機會再執行清理，留在遊戲白名單中的項目會一直讓 GMS 免於凍結。
 
-1. 在 App 最下方按「解除安裝前清理」，確認後執行。
-2. 清理會停止自動守護與夜間保護，並從遊戲白名單移除**本 App 當初加入的項目**（依第一次寫入前記錄的基準判斷），其他程式的項目會保留。
+1. 在「設定」頁最下方按「解除安裝前清理」，確認後執行。
+2. 清理會停止自動守護與夜間守護，並從遊戲白名單移除**本 App 當初加入的項目**（依第一次寫入前記錄的基準判斷），其他程式的項目會保留。
 3. 沒有剩下任何項目時寫入空字串，不會刪除 key。直接刪除 key 時系統不會清除快取，被移除的項目會繼續受到保護。
 4. 完成後可以直接點「前往解除安裝」。
 
@@ -155,16 +192,12 @@ adb logcat -s Suzumori
 adb shell dumpsys greezer
 ```
 
-## 依賴
+回報問題時，請附上事件紀錄頁右上角匯出的紀錄。
 
-- 只使用 Google（AndroidX、Jetpack）與 JetBrains（Kotlin、kotlinx）官方的函式庫，**唯一的例外**是介面：
-  - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：HyperOS 風格的 Compose 元件、毛玻璃效果與圖示。
-  - 它所依賴的 [MaterialKolor](https://github.com/jordond/materialkolor)（MIT）。
-  - 底部的液態玻璃導覽列（`ui/components/glass/`）改寫自 miuix v0.9.4 範例 App 的原始碼（Apache-2.0），
-    該範例又改編自 [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）。
-    檔案開頭保留原作者的版權與授權標示，並註明修改處。不是額外的依賴套件。
+## 隱私
+
 - 權限只有 `WRITE_SETTINGS`、`RECEIVE_BOOT_COMPLETED`、`FOREGROUND_SERVICE`、`POST_NOTIFICATIONS`。
-- 沒有 `INTERNET` 權限，也沒有任何分析、統計或錯誤回報 SDK。
+- 沒有 `INTERNET` 權限，也沒有任何分析、統計或錯誤回報 SDK。所有紀錄都只存在手機上，只有你自己匯出時才會離開手機。
 
 ## 建置
 
@@ -172,6 +205,7 @@ adb shell dumpsys greezer
 
 ```
 ./gradlew testDebugUnitTest     # 單元測試
+./gradlew lintRelease           # lint
 ./gradlew assembleDebug         # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew assembleRelease       # 需要 keystore.properties 才會簽章
 ```
@@ -184,3 +218,25 @@ storePassword=...
 keyAlias=suzumori
 keyPassword=...
 ```
+
+### 依賴
+
+- 只使用 Google（AndroidX、Jetpack）與 JetBrains（Kotlin、kotlinx）官方的函式庫，**唯一的例外**是介面：
+  - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：HyperOS 風格的 Compose 元件、毛玻璃效果與圖示。
+  - 它所依賴的 [MaterialKolor](https://github.com/jordond/materialkolor)（MIT）。
+- 底部的液態玻璃導覽列（`ui/components/glass/`）改寫自 miuix v0.9.4 範例 App 的原始碼（Apache-2.0），
+  該範例又改編自 [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）。
+  檔案開頭保留原作者的版權與授權標示，並註明修改處。不是額外的依賴套件。
+
+## 參與貢獻
+
+歡迎回報問題與提出改進，請先看 [CONTRIBUTING.md](CONTRIBUTING.md)。安全性問題請依 [SECURITY.md](SECURITY.md) 私下回報。
+
+## 授權
+
+Suzumori 以 [GNU General Public License v3.0](LICENSE) 釋出：你可以自由使用、修改與散布，但散布修改後的版本時必須同樣以 GPL-3.0 公開原始碼。
+
+- `app/src/main/kotlin/com/nakisuzu/suzumori/ui/components/glass/` 中的檔案以 Apache-2.0 授權，見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+- App 圖示與關於頁插畫由專案作者提供，隨本專案以 GPL-3.0 釋出。
+
+Suzumori 與小米、Google 沒有任何關係。HyperOS、MIUI 是小米的商標，Google Play、Firebase Cloud Messaging 是 Google 的商標。

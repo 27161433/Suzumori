@@ -1,0 +1,35 @@
+# 更新紀錄 / Changelog
+
+格式參考 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/)，版本號遵循 [語意化版本](https://semver.org/lang/zh-TW/)。
+
+This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
+
+## [1.0.0] - 2026-10-19
+
+第一個公開版本。First public release.
+
+### 功能
+
+- 自動守護：監聽 `MILLET_NO_RESTRICT_APP` 與遊戲白名單，GMS 被移除時立即補回；另外在螢幕開關、開機（含解鎖前）、App 更新時檢查，並每 15 分鐘保底檢查一次。
+- 夜間守護：把 GMS（以及本 App）加入遊戲白名單，避免 HyperOS 4 夜間凍結。
+- 解凍並重連：App 內與快速設定磚都可以手動執行。
+- 事件紀錄：最近 2000 筆名單改寫、修補與廣播，可匯出成純文字。
+- 自我監測：記錄本 App 是否曾被暫停、程序被結束的原因（小米的清理原因也會顯示成文字），以及被結束後是否自動重新啟動。
+- 首頁提示寫入權限、省電策略、自啟動沒設定好的情況，點一下直接開啟對應的系統頁面。
+- 介面支援繁體中文、简体中文、English，以及淺色、深色主題。
+- 常駐通知可選系統預設、固定位置（置頂或置底）或可收納。
+- 解除安裝前清理：只移除本 App 加入遊戲白名單的項目。
+
+### Features
+
+- Auto guard: watches `MILLET_NO_RESTRICT_APP` and the game allowlist and puts GMS back as soon as it's removed. Also checks on screen on/off, boot (including before unlock) and app updates, with a fallback check every 15 minutes.
+- Night guard: adds GMS (and Suzumori) to the game allowlist so HyperOS 4 doesn't freeze it at night.
+- Unfreeze & reconnect, from the app or a quick settings tile.
+- Event log: the last 2,000 list rewrites, patches and broadcasts, exportable as plain text.
+- Self-monitoring: records pauses, why the process was killed (including Xiaomi's cleanup reasons), and whether it restarted afterwards.
+- The home page points out missing write permission, battery saver or autostart settings and opens the right system page in one tap.
+- 繁體中文, 简体中文 and English, with light and dark themes.
+- Persistent notification styles: default, pinned (top or bottom), or foldable.
+- Pre-uninstall cleanup that removes only the game allowlist entries Suzumori added.
+
+[1.0.0]: https://github.com/27161433/Suzumori/releases/tag/v1.0.0
