@@ -1,6 +1,7 @@
 package com.nakisuzu.suzumori
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,6 +9,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,7 +45,9 @@ import com.nakisuzu.suzumori.ui.main.MainDialogs
 import com.nakisuzu.suzumori.ui.main.MainViewModel
 import com.nakisuzu.suzumori.ui.settings.SettingsScreen
 import com.nakisuzu.suzumori.ui.settings.SettingsViewModel
+import com.nakisuzu.suzumori.ui.components.Motion
 import com.nakisuzu.suzumori.ui.theme.SuzumoriTheme
+import com.nakisuzu.suzumori.ui.update.UpdateScreen
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.NavigationItem
 import top.yukonga.miuix.kmp.basic.Scaffold
@@ -50,11 +59,16 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels { MainViewModel.Factory }
     private val logViewModel: EventLogViewModel by viewModels { EventLogViewModel.Factory }
     private val settingsViewModel: SettingsViewModel by viewModels { SettingsViewModel.Factory }
+    private val container get() = (application as SuzumoriApp).container
+
+    /** 更新頁是否開著。從更新通知開啟 App 時直接打開。 */
+    private var showUpdate by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // targetSdk 22 不會自動套用 edge-to-edge，要自己開啟並在 Compose 端處理 insets。
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        if (consumeOpenUpdate(intent)) showUpdate = true
 
         // 開啟系統設定頁，失敗時顯示原因。
         fun openPage(page: (Context) -> String?) {
@@ -66,6 +80,7 @@ class MainActivity : ComponentActivity() {
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val logState by logViewModel.state.collectAsStateWithLifecycle()
                 val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
+                val updateState by container.updates.state.collectAsStateWithLifecycle()
                 var introShown by rememberSaveable { mutableStateOf(false) }
                 val pagerState = rememberPagerState { PAGE_COUNT }
                 val pages = listOf(
@@ -91,6 +106,8 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = pagerState.currentPage != 0) {
                     scope.launch { pagerState.animateScrollToPage(0) }
                 }
+                // 更新頁開著時，返回先關閉更新頁（後宣告的優先）。
+                BackHandler(enabled = showUpdate) { showUpdate = false }
 
                 // miuix 的對話框（OverlayDialog）要靠 Scaffold 提供的圖層才顯示得出來，所以最外層一定要包 Scaffold。
                 // 內距由各頁自己處理，這裡不使用 Scaffold 給的 padding。
@@ -116,6 +133,8 @@ class MainActivity : ComponentActivity() {
                                     onIntroShown = { introShown = true },
                                     openPage = ::openPage,
                                     onOpenLog = { scope.launch { pagerState.animateScrollToPage(1) } },
+                                    update = updateState,
+                                    onOpenUpdate = { showUpdate = true },
                                 )
                                 1 -> EventLogScreen(logState, logViewModel)
                                 2 -> SettingsScreen(
@@ -125,7 +144,7 @@ class MainActivity : ComponentActivity() {
                                     canCleanup = !state.busy,
                                     onCleanup = viewModel::requestCleanup,
                                 )
-                                else -> AboutScreen(state, openPage = ::openPage)
+                                else -> AboutScreen(state, update = updateState, openPage = ::openPage, onOpenUpdate = { showUpdate = true })
                             }
                         }
 
@@ -137,6 +156,20 @@ class MainActivity : ComponentActivity() {
                             isBlurActive = remember { isRuntimeShaderSupported() },
                             modifier = Modifier.align(Alignment.BottomCenter),
                         )
+
+                        // 更新頁從右側滑入，蓋過分頁與導覽列。
+                        AnimatedVisibility(
+                            visible = showUpdate,
+                            enter = slideInHorizontally(tween(450, easing = Motion.Emphasized)) { it / 3 } + fadeIn(tween(300)),
+                            exit = slideOutHorizontally(tween(350, easing = Motion.Emphasized)) { it / 3 } + fadeOut(tween(200)),
+                        ) {
+                            UpdateScreen(
+                                state = updateState,
+                                onBack = { showUpdate = false },
+                                onCheck = { container.appScope.launch { container.updates.check() } },
+                                onOpenUrl = { url -> openPage { SystemPages.openUrl(it, url) } },
+                            )
+                        }
 
                         MainDialogs(state, viewModel, onUninstall = { openPage(SystemPages::requestUninstall) })
                         LogDialogs(logState, logViewModel)
@@ -153,8 +186,24 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
     }
 
-    private companion object {
+    /** App 已經開著時點更新通知，交給現有的畫面打開更新頁。 */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (consumeOpenUpdate(intent)) showUpdate = true
+    }
+
+    /** 讀取並移除「打開更新頁」的要求，避免畫面重建時又打開一次。 */
+    private fun consumeOpenUpdate(intent: Intent?): Boolean {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_UPDATE, false) != true) return false
+        intent.removeExtra(EXTRA_OPEN_UPDATE)
+        return true
+    }
+
+    companion object {
+        /** 更新通知帶的 extra：開啟後直接打開更新頁。 */
+        const val EXTRA_OPEN_UPDATE = "com.nakisuzu.suzumori.extra.OPEN_UPDATE"
+
         /** 首頁、事件紀錄、設定、關於。 */
-        const val PAGE_COUNT = 4
+        private const val PAGE_COUNT = 4
     }
 }

@@ -301,4 +301,30 @@
     <string name="clean_auto_system_abnormal">Auto-cleaned after a system fault</string>
     <string name="package_security_center">Security</string>
     <string name="package_settings">Settings</string>
+
+    <!-- Updates -->
+    <string name="back">Back</string>
+    <string name="update_title">Updates</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_available">Version %s is available</string>
+    <string name="update_up_to_date">You\'re up to date</string>
+    <string name="update_failed">Couldn\'t check for updates</string>
+    <string name="update_current_version">Current version %s</string>
+    <string name="update_latest_version">Latest version %1$s, released %2$s</string>
+    <string name="update_latest_version_no_date">Latest version %s</string>
+    <string name="update_last_checked">Last checked %s</string>
+    <string name="update_notes">What\'s new</string>
+    <string name="update_download">Download %s</string>
+    <string name="update_open_github">View on GitHub</string>
+    <string name="update_check_now">Check again</string>
+    <string name="update_install_hint">After downloading, open the APK to install it over the current version. Your settings and logs are kept.</string>
+    <string name="update_tap_to_view">Tap to see what\'s new</string>
+    <string name="update_status_available">%s available</string>
+    <string name="update_status_latest">Up to date</string>
+    <string name="update_auto_check">Check for updates automatically</string>
+    <string name="update_auto_check_summary">Asks GitHub for a new version when the app opens and once a day, and notifies you when one is out</string>
+    <string name="update_channel_name">Updates</string>
+    <string name="update_channel_description">Notifies you when a new version is out</string>
+    <string name="update_notification_title">Suzumori %s is available</string>
+    <string name="about_check_updates">Check for updates</string>
 </resources>

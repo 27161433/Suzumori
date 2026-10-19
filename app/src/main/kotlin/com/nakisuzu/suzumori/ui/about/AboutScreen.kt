@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.platform.SystemPages
+import com.nakisuzu.suzumori.platform.UpdateState
 import com.nakisuzu.suzumori.ui.components.Chevron
 import com.nakisuzu.suzumori.ui.components.Entrance
 import com.nakisuzu.suzumori.ui.components.Footnote
@@ -51,7 +52,7 @@ import top.yukonga.miuix.kmp.basic.Text
  * 權限類的項目都可以點擊，直接前往對應的系統頁面；沒開啟時多一行提示。
  */
 @Composable
-fun AboutScreen(state: MainUiState, openPage: ((Context) -> String?) -> Unit) {
+fun AboutScreen(state: MainUiState, update: UpdateState, openPage: ((Context) -> String?) -> Unit, onOpenUpdate: () -> Unit) {
     val colors = SuzumoriTheme.colors
     SuzumoriPage {
         item(key = "title") { PageTitle(stringResource(R.string.tab_about)) }
@@ -59,6 +60,22 @@ fun AboutScreen(state: MainUiState, openPage: ((Context) -> String?) -> Unit) {
         item(key = "project") {
             Entrance(index = 2, play = true) {
                 Panel(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 4.dp)) {
+                    InfoRow(
+                        icon = SzIcons.Download,
+                        iconTint = colors.onSurfaceMuted,
+                        title = stringResource(R.string.about_check_updates),
+                        onClick = onOpenUpdate,
+                    ) {
+                        NavigableValue {
+                            val latest = update.latest
+                            when {
+                                update.available && latest != null ->
+                                    ValueText(stringResource(R.string.update_status_available, latest.version.toString()), colors.primary)
+                                latest != null -> ValueText(stringResource(R.string.update_status_latest), colors.onSurfaceMuted)
+                                else -> ValueText("—", colors.onSurfaceMuted)
+                            }
+                        }
+                    }
                     InfoRow(
                         icon = SzIcons.Code,
                         iconTint = colors.onSurfaceMuted,

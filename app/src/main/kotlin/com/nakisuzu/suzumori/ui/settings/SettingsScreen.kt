@@ -191,8 +191,25 @@ fun SettingsScreen(
                 }
             }
         }
-        item(key = "cleanup") {
+        item(key = "updates") {
             Entrance(index = 3, play = true) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionTitle(stringResource(R.string.update_title))
+                    Panel(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 18.dp, vertical = 4.dp)) {
+                        SwitchRow(
+                            title = stringResource(R.string.update_auto_check),
+                            summary = stringResource(R.string.update_auto_check_summary),
+                            checked = state.autoCheckUpdates,
+                            enabled = true,
+                            onCheckedChange = viewModel::setAutoCheckUpdates,
+                            showDivider = false,
+                        )
+                    }
+                }
+            }
+        }
+        item(key = "cleanup") {
+            Entrance(index = 4, play = true) {
                 CleanupSection(cleaning = cleaning, enabled = canCleanup, onCleanup = onCleanup)
             }
         }

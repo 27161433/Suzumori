@@ -48,6 +48,9 @@ object SystemPages {
         Intent().setClassName(Packages.GMS, "${Packages.GMS}.gcm.GcmDiagnostics"),
     )
 
+    /** 在瀏覽器開啟網址，例如更新的下載連結。 */
+    fun openUrl(context: Context, url: String): String? = start(context, Intent(Intent.ACTION_VIEW, url.toUri()))
+
     /** 在瀏覽器開啟原始碼頁面。 */
     fun openSourceCode(context: Context): String? = start(context, Intent(Intent.ACTION_VIEW, SOURCE_URL.toUri()))
 

@@ -61,8 +61,10 @@ import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.platform.SystemPages
+import com.nakisuzu.suzumori.platform.UpdateState
 import com.nakisuzu.suzumori.ui.components.AnimatedText
 import com.nakisuzu.suzumori.ui.components.BusyIcon
+import com.nakisuzu.suzumori.ui.components.Chevron
 import com.nakisuzu.suzumori.ui.components.Entrance
 import com.nakisuzu.suzumori.ui.components.Footnote
 import com.nakisuzu.suzumori.ui.components.IconBadge
@@ -84,6 +86,7 @@ import java.time.LocalTime
  *
  * [playIntro] 為 true 時播放進場動畫（只在開啟 App 時播一次），播完呼叫 [onIntroShown]。
  * [openPage] 開啟系統設定頁，失敗時由呼叫端顯示訊息；[onOpenLog] 切到事件紀錄分頁。
+ * GitHub 上有新版本時顯示更新卡片，點一下呼叫 [onOpenUpdate]。
  */
 @Composable
 fun HomeScreen(
@@ -93,6 +96,8 @@ fun HomeScreen(
     onIntroShown: () -> Unit,
     openPage: ((Context) -> String?) -> Unit,
     onOpenLog: () -> Unit,
+    update: UpdateState,
+    onOpenUpdate: () -> Unit,
 ) {
     val now by rememberMinuteClock()
     LaunchedEffect(Unit) {
@@ -115,6 +120,8 @@ fun HomeScreen(
                 onOpenPowerPolicy = { openPage(SystemPages::openPowerPolicy) },
                 onOpenAppDetails = { openPage(SystemPages::openAppDetails) },
                 onAutoGuardChange = viewModel::setAutoGuard,
+                update = update,
+                onOpenUpdate = onOpenUpdate,
             )
         }
         item(key = "status") { Entrance(2, playIntro) { StatusTiles(state, now, onOpenLog) } }
@@ -245,6 +252,8 @@ private fun HeroSection(
     onOpenPowerPolicy: () -> Unit,
     onOpenAppDetails: () -> Unit,
     onAutoGuardChange: (Boolean) -> Unit,
+    update: UpdateState,
+    onOpenUpdate: () -> Unit,
 ) {
     val colors = SuzumoriTheme.colors
     val hero = rememberHero(state, now)
@@ -309,6 +318,37 @@ private fun HeroSection(
                 button = stringResource(R.string.go_turn_on),
                 onClick = onOpenAppDetails,
             )
+        }
+        AnimatedVisibility(visible = update.available, enter = revealIn, exit = revealOut) {
+            UpdateCard(version = update.latest?.version?.toString().orEmpty(), onClick = onOpenUpdate)
+        }
+    }
+}
+
+/** GitHub 上有新版本時的卡片，點一下打開更新頁。 */
+@Composable
+private fun UpdateCard(version: String, onClick: () -> Unit) {
+    val colors = SuzumoriTheme.colors
+    Panel(
+        modifier = Modifier
+            .padding(top = 24.dp)
+            .fillMaxWidth(),
+        color = colors.primaryContainer,
+        contentPadding = PaddingValues(18.dp),
+        onClick = onClick,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            IconBadge(icon = SzIcons.Download, tint = colors.primary, background = colors.surface)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    text = stringResource(R.string.update_available, version),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onPrimaryContainer,
+                )
+                Text(text = stringResource(R.string.update_tap_to_view), fontSize = 13.sp, color = colors.onPrimaryContainer)
+            }
+            Chevron()
         }
     }
 }

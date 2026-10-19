@@ -25,6 +25,7 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val notificationStyle: NotificationStyle = NotificationStyle.SYSTEM,
     val notificationPosition: NotificationPosition = NotificationPosition.BOTTOM,
+    val autoCheckUpdates: Boolean = true,
     /** 有設定正在寫入，期間擋下其他開關。 */
     val busy: Boolean = false,
 )
@@ -34,12 +35,16 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     val state: StateFlow<SettingsUiState> = combine(
         combine(container.configs.config, container.appearance.language, container.appearance.themeMode, ::Triple),
-        container.appearance.notificationStyle,
-        container.appearance.notificationPosition,
+        combine(container.appearance.notificationStyle, container.appearance.notificationPosition, container.updates.autoCheck, ::Triple),
         busy,
-    ) { (config, language, themeMode), style, position, busy ->
-        SettingsUiState(config, language, themeMode, style, position, busy)
+    ) { (config, language, themeMode), (style, position, autoCheck), busy ->
+        SettingsUiState(config, language, themeMode, style, position, autoCheck, busy)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
+
+    /** 關閉後不再自動連線到 GitHub；更新頁仍可手動檢查。 */
+    fun setAutoCheckUpdates(enabled: Boolean) {
+        container.appScope.launch { container.updates.setAutoCheck(enabled) }
+    }
 
     fun setLanguage(language: AppLanguage) = container.appearance.setLanguage(language)
 

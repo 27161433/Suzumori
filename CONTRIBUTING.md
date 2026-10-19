@@ -32,7 +32,7 @@
 
 - **targetSdk 必須維持 22**，原因見 README 的「為什麼 targetSdk 固定為 22」。
 - 只使用 Google（AndroidX、Jetpack）與 JetBrains（Kotlin、kotlinx）官方的函式庫；介面另外使用 miuix。新增其他依賴前請先討論。
-- 不加入 `INTERNET` 權限，也不加入任何分析、統計或錯誤回報 SDK。
+- 網路只用於向 GitHub 檢查更新（`platform/Updates.kt`），不要新增其他連線，也不加入任何分析、統計或錯誤回報 SDK。
 - 程式碼註解、commit 訊息使用繁體中文；用英文提交也沒問題。
 - 介面文字放在字串資源，`values`（英文）、`values-zh-rTW`、`values-zh-rCN` 三份都要更新，lint 會檢查是否缺漏。
 - `app/src/main/kotlin/.../core/` 不依賴 Android，邏輯放在這裡並寫單元測試。
@@ -72,7 +72,7 @@ Thanks for helping! Suzumori is a small project maintained by one person, so rep
 
 - **targetSdk must stay at 22**; see "Why targetSdk is fixed at 22" in the README.
 - Only official Google (AndroidX, Jetpack) and JetBrains (Kotlin, kotlinx) libraries, plus miuix for the UI. Please discuss before adding any other dependency.
-- No `INTERNET` permission and no analytics, tracking or crash-reporting SDKs.
+- The network is only used to check GitHub for updates (`platform/Updates.kt`). Don't add other connections, and no analytics, tracking or crash-reporting SDKs.
 - Code comments and commit messages are in Traditional Chinese, but English is fine for contributions.
 - UI text lives in string resources. Update all three of `values` (English), `values-zh-rTW` and `values-zh-rCN`; lint checks for missing translations.
 - `app/src/main/kotlin/.../core/` doesn't depend on Android. Put logic there and cover it with unit tests.

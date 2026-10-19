@@ -20,6 +20,7 @@ import com.nakisuzu.suzumori.platform.GuardActions
 import com.nakisuzu.suzumori.platform.GuardScheduler
 import com.nakisuzu.suzumori.platform.SelfMonitor
 import com.nakisuzu.suzumori.platform.SystemSettingsStore
+import com.nakisuzu.suzumori.platform.Updates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -44,6 +45,7 @@ class AppContainer(context: Context) {
     val guardState: GuardStateStore = DataStoreGuardStateStore(DeviceStorage.dataStore(storage, "guard_state"))
     val eventLog: EventLog = FileEventLog(DeviceStorage.eventLogFile(storage))
     val appearance = AppearanceStore(appContext, DeviceStorage.dataStore(storage, "appearance"))
+    val updates = Updates(appContext, DeviceStorage.dataStore(storage, "update"), appScope)
 
     init {
         DeviceStorage.migrateLegacyDataStore(appContext, storage, BASELINE)

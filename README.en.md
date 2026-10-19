@@ -40,6 +40,7 @@ Global HyperOS builds don't have this freezing mechanism and don't need Suzumori
 - **Self-monitoring**: records whether Suzumori was frozen, why its process was killed, and whether it restarted afterwards.
 - **Permission prompts**: if write permission, battery saver or autostart isn't set up, the home page says so and opens the right system page in one tap.
 - **Interface**: 繁體中文, 简体中文 and English, plus light and dark themes, all switchable in Settings. The persistent notification can use the default style, a pinned position (top or bottom) or a foldable style.
+- **Update check**: asks GitHub for a new version when the app opens and once a day, and notifies you when one is out. The notification opens the release notes and download link. You can turn it off in Settings.
 - **Pre-uninstall cleanup**: removes only the entries Suzumori added.
 
 ## Download and install
@@ -92,6 +93,7 @@ The About page shows all three settings at any time; tap one to open its system 
 | Settings | Night guard | On | Keeps GMS in the game allowlist. Turning it off removes only the entries Suzumori added |
 | Settings | Add this app to the game allowlist too | On | At night the "No restrictions" list stops working, so Suzumori can be frozen too, and Joyose may clear the game allowlist overnight. A frozen Suzumori can't restore the lists |
 | Settings | Persistent notification | On | Runs as a foreground service. Without it, list changes reached Suzumori about 10 seconds late in testing |
+| Settings | Check for updates automatically | On | Asks GitHub for a new version when the app opens and once a day, and notifies you when one is out |
 
 ## How it works
 
@@ -196,8 +198,9 @@ When reporting a problem, please attach the log exported from the top right of t
 
 ## Privacy
 
-- The only permissions are `WRITE_SETTINGS`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `POST_NOTIFICATIONS`.
-- There's no `INTERNET` permission and no analytics, tracking or crash-reporting SDK. All records stay on the phone and only leave it when you export them.
+- The only permissions are `INTERNET`, `WRITE_SETTINGS`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `POST_NOTIFICATIONS`.
+- The network is only used to ask GitHub (`api.github.com`) for a new version, and no personal data is sent. If you turn off "Check for updates automatically" in Settings, Suzumori only connects when you tap "Check again" on the update page.
+- There's no analytics, tracking or crash-reporting SDK. All records stay on the phone and only leave it when you export them.
 
 ## Building
 

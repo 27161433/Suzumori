@@ -24,8 +24,8 @@ android {
         // 會拋出 IllegalArgumentException；targetSdk 22 以下只會記錄警告並允許寫入。
         // 本 App 的核心功能完全依賴這個相容行為。
         targetSdk = 22
-        versionCode = 6
-        versionName = "1.0.1"
+        versionCode = 7
+        versionName = "1.1.0"
     }
 
     signingConfigs {

@@ -2,13 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 權限只有這四個。 -->
+    <!-- 權限只有這五個。INTERNET 只用來向 GitHub 查詢新版本（見 platform/Updates），可以在設定中關閉。 -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- WorkManager 自帶的權限。本 App 不持有 wake lock，定期檢查也沒有網路條件，移除。 -->
+    <!-- WorkManager 自帶的權限。本 App 不持有 wake lock；定期檢查與每天的更新檢查都不設網路條件
+         （更新檢查失敗時依退避間隔重試），用不到網路狀態，移除。 -->
     <uses-permission
         android:name="android.permission.WAKE_LOCK"
         tools:node="remove" />

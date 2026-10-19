@@ -22,14 +22,16 @@ You'll get a reply as soon as possible, and the issue will be disclosed after a 
 
 ## 範圍 / Scope
 
-Suzumori 會寫入兩個系統設定值（`MILLET_NO_RESTRICT_APP`、`com.miui.game.allowlist`）並送出解凍與重連廣播。以下情況屬於安全性問題：
+Suzumori 會寫入兩個系統設定值（`MILLET_NO_RESTRICT_APP`、`com.miui.game.allowlist`）、送出解凍與重連廣播，並向 GitHub API 查詢新版本。以下情況屬於安全性問題：
 
 - 其他 App 能透過 Suzumori 寫入任意系統設定，或以 Suzumori 的身分送出廣播。
-- Suzumori 洩漏事件紀錄或其他資料給其他 App。
+- Suzumori 洩漏事件紀錄或其他資料給其他 App 或網路。
 - Suzumori 移除或破壞其他程式加入名單的項目。
+- 更新頁顯示的下載連結可能指向本專案 GitHub Releases 以外的地方。
 
-Suzumori writes two system settings (`MILLET_NO_RESTRICT_APP` and `com.miui.game.allowlist`) and sends unfreeze and reconnect broadcasts. These count as security problems:
+Suzumori writes two system settings (`MILLET_NO_RESTRICT_APP` and `com.miui.game.allowlist`), sends unfreeze and reconnect broadcasts, and asks the GitHub API for new versions. These count as security problems:
 
 - Another app can use Suzumori to write arbitrary system settings or send broadcasts as Suzumori.
-- Suzumori leaks the event log or other data to other apps.
+- Suzumori leaks the event log or other data to other apps or over the network.
 - Suzumori removes or corrupts entries that other apps added to the lists.
+- The download link on the update page can point somewhere other than this project's GitHub Releases.

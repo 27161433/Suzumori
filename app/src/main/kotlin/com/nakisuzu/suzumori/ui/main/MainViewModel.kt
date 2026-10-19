@@ -72,6 +72,8 @@ class MainViewModel(
             container.controller.ensure(Trigger.APP_OPEN)
             refresh()
         }
+        // 檢查 GitHub 上的新版本。放在 App 的 scope，離開畫面也會查完。
+        container.appScope.launch { container.updates.onAppOpen() }
     }
 
     fun refresh() {

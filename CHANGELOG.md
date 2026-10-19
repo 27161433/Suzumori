@@ -4,6 +4,18 @@
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 未發布 / Unreleased
+
+### 新增
+
+- 檢查更新：開啟 App 時與每天一次向 GitHub 查詢新版本。有新版本時首頁顯示提示，背景檢查到時發出通知，點開後顯示更新內容與下載連結。設定中可以關閉自動檢查。
+- 因此新增 `INTERNET` 權限，只用來連線到 `api.github.com`，不傳送任何個人資料。
+
+### Added
+
+- Update check: asks GitHub for a new version when the app opens and once a day. The home page shows a card when an update is out, and a background check posts a notification that opens the release notes and download link. Automatic checks can be turned off in Settings.
+- This adds the `INTERNET` permission, used only to reach `api.github.com`. No personal data is sent.
+
 ## [1.0.1] - 2026-10-19
 
 ### 修正
