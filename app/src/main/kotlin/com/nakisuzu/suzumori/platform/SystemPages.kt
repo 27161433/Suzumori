@@ -16,15 +16,31 @@ object SystemPages {
         startFirstAvailable(context, Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, packageUri(context)))
 
     /**
-     * 小米安全中心的 App 詳情頁，裡面有「省電策略」與「自啟動」。
+     * 小米「應用管理」的 App 詳情頁，裡面有「省電策略」與「自啟動」。
      * 實測 HyperOS 4 上由 `com.miui.securitycenter/com.miui.appmanager.ApplicationsDetailsActivity` 處理。
      */
-    fun openAppPowerSettings(context: Context): String? = startFirstAvailable(
+    fun openAppDetails(context: Context): String? = startFirstAvailable(
         context,
         Intent(ACTION_MIUI_APP_DETAIL)
             .putExtra("package_name", context.packageName)
             .putExtra("miui.intent.extra.USER_ID", Process.myUid() / PER_USER_RANGE),
     )
+
+    /**
+     * 直接開啟本 App 的「省電策略」選擇頁（無限制、智能限制…），不必先進 App 詳情頁再點一次。
+     *
+     * HyperOS 4 的 App 詳情頁點「省電策略」時，開的是安全中心的 PowerDetailActivity（exported），
+     * 並帶 `iconPackage`、`uid`、`UserId`；這裡帶一樣的參數。找不到這個頁面時退回 App 詳情頁。
+     */
+    fun openPowerPolicy(context: Context): String? {
+        val intent = Intent()
+            .setClassName(SECURITY_CENTER, POWER_DETAIL_ACTIVITY)
+            .putExtra("iconPackage", context.packageName)
+            .putExtra("package_name", context.packageName)
+            .putExtra("uid", Process.myUid())
+            .putExtra("UserId", Process.myUid() / PER_USER_RANGE)
+        return if (intent.resolveActivity(context.packageManager) != null) start(context, intent) else openAppDetails(context)
+    }
 
     fun openFcmDiagnostics(context: Context): String? = start(
         context,
@@ -67,6 +83,8 @@ object SystemPages {
     private fun packageUri(context: Context): Uri = Uri.fromParts("package", context.packageName, null)
 
     private const val ACTION_MIUI_APP_DETAIL = "miui.intent.action.APP_MANAGER_APPLICATION_DETAIL"
+    private const val SECURITY_CENTER = "com.miui.securitycenter"
+    private const val POWER_DETAIL_ACTIVITY = "com.miui.powercenter.legacypowerrank.PowerDetailActivity"
 
     /** AOSP `UserHandle.PER_USER_RANGE`。 */
     private const val PER_USER_RANGE = 100_000

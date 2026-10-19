@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#2F4A6D</color>
+    <!-- 比插畫外圈光暈（約 #A8D1F1）稍淺，讓插畫邊緣自然融進圖示背景。 -->
+    <color name="ic_launcher_background">#D4E9FA</color>
 </resources>

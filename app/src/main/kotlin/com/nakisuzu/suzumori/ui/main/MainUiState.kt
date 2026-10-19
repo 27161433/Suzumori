@@ -16,6 +16,8 @@ data class MainUiState(
      * 不能再看 MILLET 名單，因為本 App 會自己維持在 MILLET 中。
      */
     val selfNoRestrict: Boolean = false,
+    /** 小米的「自啟動」已開啟；不是小米系統或讀不到時為 null。 */
+    val selfAutoStart: Boolean? = null,
     /** `ro.mi.os.version.name` 與組建版本；讀不到時為 null。 */
     val systemVersion: String? = null,
     val config: GuardConfig = GuardConfig(),
@@ -26,9 +28,13 @@ data class MainUiState(
     /** 新的在前。 */
     val events: List<EventEntry> = emptyList(),
     val busy: Boolean = false,
+    /** 正在執行的操作，用來決定轉圈顯示在哪個按鈕上。 */
+    val busyAction: BusyAction? = null,
     val dialog: MainDialog? = null,
     val dialogVisible: Boolean = false,
 )
+
+enum class BusyAction { CHECK, UNFREEZE, CLEANUP }
 
 sealed interface MainDialog {
     data class Message(val title: String, val text: String) : MainDialog
@@ -36,6 +42,4 @@ sealed interface MainDialog {
     data object ConfirmCleanup : MainDialog
 
     data class CleanupFinished(val text: String, val canUninstall: Boolean) : MainDialog
-
-    data object ConfirmClearLog : MainDialog
 }

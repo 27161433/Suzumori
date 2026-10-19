@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 「可收納」樣式的常駐通知內容。HyperOS 只允許有自訂版面的通知長按收納。
+     兩行都用系統的通知標題樣式：實測它解析出的顏色和 HyperOS 其他通知的文字一樣，
+     而且由系統介面在顯示時決定。HyperOS 的通知欄不論系統深淺色都用淺色文字，
+     內文樣式的顏色在它的灰色卡片上偏暗，所以內文也用標題樣式，只是不加粗。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/notification_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textAppearance="@android:style/TextAppearance.Material.Notification.Title"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/notification_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textAppearance="@android:style/TextAppearance.Material.Notification.Title"
+        android:textStyle="normal" />
+</LinearLayout>

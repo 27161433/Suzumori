@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 前景是「水晶魔鈴與藍色光環」插畫，縮在 108dp 圖層中間 76dp，臉和鈴鐺都落在 72dp 的安全範圍內；
+     四角露出的背景用接近插畫外圈光暈的淺藍色。主題圖示（單色）沿用鈴鐺向量圖。 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>

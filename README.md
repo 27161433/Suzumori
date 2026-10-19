@@ -160,6 +160,9 @@ adb shell dumpsys greezer
 - 只使用 Google（AndroidX、Jetpack）與 JetBrains（Kotlin、kotlinx）官方的函式庫，**唯一的例外**是介面：
   - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：HyperOS 風格的 Compose 元件、毛玻璃效果與圖示。
   - 它所依賴的 [MaterialKolor](https://github.com/jordond/materialkolor)（MIT）。
+  - 底部的液態玻璃導覽列（`ui/components/glass/`）改寫自 miuix v0.9.4 範例 App 的原始碼（Apache-2.0），
+    該範例又改編自 [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）。
+    檔案開頭保留原作者的版權與授權標示，並註明修改處。不是額外的依賴套件。
 - 權限只有 `WRITE_SETTINGS`、`RECEIVE_BOOT_COMPLETED`、`FOREGROUND_SERVICE`、`POST_NOTIFICATIONS`。
 - 沒有 `INTERNET` 權限，也沒有任何分析、統計或錯誤回報 SDK。
 

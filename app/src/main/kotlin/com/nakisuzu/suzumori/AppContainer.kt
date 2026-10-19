@@ -10,6 +10,7 @@ import com.nakisuzu.suzumori.core.log.FileEventLog
 import com.nakisuzu.suzumori.core.settings.SettingsStore
 import com.nakisuzu.suzumori.core.signal.GmsSignals
 import com.nakisuzu.suzumori.platform.AndroidBootCounter
+import com.nakisuzu.suzumori.platform.AppearanceStore
 import com.nakisuzu.suzumori.platform.BroadcastGmsSignals
 import com.nakisuzu.suzumori.platform.DataStoreBaselineStore
 import com.nakisuzu.suzumori.platform.DataStoreConfigStore
@@ -42,6 +43,7 @@ class AppContainer(context: Context) {
     val configs: ConfigStore = DataStoreConfigStore(DeviceStorage.dataStore(storage, "config"))
     val guardState: GuardStateStore = DataStoreGuardStateStore(DeviceStorage.dataStore(storage, "guard_state"))
     val eventLog: EventLog = FileEventLog(DeviceStorage.eventLogFile(storage))
+    val appearance = AppearanceStore(appContext, DeviceStorage.dataStore(storage, "appearance"))
 
     init {
         DeviceStorage.migrateLegacyDataStore(appContext, storage, BASELINE)

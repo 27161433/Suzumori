@@ -34,6 +34,7 @@
         android:name=".SuzumoriApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:resizeableActivity="true"
@@ -46,8 +47,10 @@
             android:name="android.max_aspect"
             android:value="3.0" />
 
+        <!-- 深淺色切換不重建頁面，由 Compose 漸變配色（見 MainActivity.onConfigurationChanged）。 -->
         <activity
             android:name=".MainActivity"
+            android:configChanges="uiMode"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

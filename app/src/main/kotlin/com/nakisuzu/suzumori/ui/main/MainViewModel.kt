@@ -2,6 +2,7 @@ package com.nakisuzu.suzumori.ui.main
 
 import android.app.Application
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -15,14 +16,14 @@ import com.nakisuzu.suzumori.core.guard.EnsureResult
 import com.nakisuzu.suzumori.core.guard.Trigger
 import com.nakisuzu.suzumori.core.list.GameAllowlist
 import com.nakisuzu.suzumori.core.list.MilletList
-import com.nakisuzu.suzumori.core.log.EventLogText
 import com.nakisuzu.suzumori.core.settings.SettingKeys
+import com.nakisuzu.suzumori.platform.AutoStart
 import com.nakisuzu.suzumori.platform.DeviceInfoReader
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
@@ -84,36 +85,34 @@ class MainViewModel(
                     milletHasGms = MilletList.contains(millet, Packages.GMS),
                     gameHasGms = GameAllowlist.contains(game, Packages.GMS),
                     selfNoRestrict = app.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(selfPackage),
+                    selfAutoStart = AutoStart.isAllowed(app),
                 )
             }
         }
     }
 
-    fun checkNow() = runAction {
+    fun checkNow() = runAction(BusyAction.CHECK) {
         val result = container.controller.ensure(Trigger.MANUAL_CHECK)
-        showDialog(MainDialog.Message("檢查完成", describe(result)))
+        MainDialog.Message("檢查完成", describe(result))
     }
 
-    fun unfreezeNow() = runAction {
+    fun unfreezeNow() = runAction(BusyAction.UNFREEZE) {
         val result = container.controller.ensureAndUnfreeze(Trigger.MANUAL_UNFREEZE)
         val text = buildString {
             if (result.patched) append("已先補回名單。")
             append("已送出解凍與重連廣播。廣播無法確認對方是否收到，請開啟 FCM 診斷頁面確認連線狀態。")
         }
-        showDialog(MainDialog.Message("已送出", text))
+        MainDialog.Message("已送出", text)
     }
 
-    fun setAutoGuard(enabled: Boolean) = runAction { container.actions.setAutoGuard(enabled) }
-
-    fun setNightProtection(enabled: Boolean) = runAction { container.actions.setNightProtection(enabled) }
-
-    fun setSelfInGameAllowlist(enabled: Boolean) = runAction { container.actions.setSelfInGameAllowlist(enabled) }
-
-    fun setPersistentNotification(enabled: Boolean) = runAction { container.actions.setPersistentNotification(enabled) }
+    /** 首頁的自動守護開關。開關本身就是回饋，不顯示轉圈或對話框。 */
+    fun setAutoGuard(enabled: Boolean) {
+        viewModelScope.launch { container.actions.setAutoGuard(enabled) }
+    }
 
     fun requestCleanup() = showDialog(MainDialog.ConfirmCleanup)
 
-    fun confirmCleanup() = runAction {
+    fun confirmCleanup() = runAction(BusyAction.CLEANUP) {
         dismissDialog()
         val result = container.actions.cleanupForUninstall()
         val text = when (result) {
@@ -121,14 +120,7 @@ class MainViewModel(
             CleanupResult.NOTHING_TO_DO -> "遊戲白名單中沒有本 App 加入的項目，已停止自動守護。現在可以解除安裝。"
             CleanupResult.FAILED -> "清理失敗，詳見事件紀錄。請確認「修改系統設定」權限仍然開啟後再試一次。"
         }
-        showDialog(MainDialog.CleanupFinished(text, canUninstall = result != CleanupResult.FAILED))
-    }
-
-    fun requestClearLog() = showDialog(MainDialog.ConfirmClearLog)
-
-    fun confirmClearLog() = runAction {
-        dismissDialog()
-        container.eventLog.clear()
+        MainDialog.CleanupFinished(text, canUninstall = result != CleanupResult.FAILED)
     }
 
     fun showMessage(title: String, text: String) = showDialog(MainDialog.Message(title, text))
@@ -138,23 +130,22 @@ class MainViewModel(
     /** 收起動畫結束後才清除內容。 */
     fun clearDialog() = local.update { if (it.dialogVisible) it else it.copy(dialog = null) }
 
-    /** 匯出用的純文字，舊到新。 */
-    suspend fun exportLogText(): String {
-        val entries = container.eventLog.entries.first()
-        val header = "Suzumori 事件紀錄（匯出時間 ${EventLogText.formatTime(System.currentTimeMillis())}）"
-        return EventLogText.format(entries, header)
-    }
-
     private fun showDialog(dialog: MainDialog) = local.update { it.copy(dialog = dialog, dialogVisible = true) }
 
-    private fun runAction(action: suspend () -> Unit) {
+    /** 執行一個操作，期間 [MainUiState.busy] 為 true。[action] 回傳的對話框在結束後才顯示。 */
+    private fun runAction(kind: BusyAction, action: suspend () -> MainDialog?) {
         if (local.value.busy) return
-        local.update { it.copy(busy = true) }
+        local.update { it.copy(busy = true, busyAction = kind) }
         viewModelScope.launch {
+            val started = SystemClock.uptimeMillis()
+            var dialog: MainDialog? = null
             try {
-                action()
+                dialog = action()
             } finally {
-                local.update { it.copy(busy = false) }
+                // 檢查通常不到 0.1 秒就完成，轉圈會一閃而過，看起來像按了沒反應。至少轉一小段時間。
+                delay((MIN_BUSY_MILLIS - (SystemClock.uptimeMillis() - started)).coerceAtLeast(0))
+                local.update { it.copy(busy = false, busyAction = null) }
+                dialog?.let(::showDialog)
                 refresh()
             }
         }
@@ -169,6 +160,8 @@ class MainViewModel(
     }
 
     companion object {
+        private const val MIN_BUSY_MILLIS = 700L
+
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as SuzumoriApp

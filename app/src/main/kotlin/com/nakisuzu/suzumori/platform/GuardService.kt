@@ -1,5 +1,6 @@
 package com.nakisuzu.suzumori.platform
 
+import android.app.Notification
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
@@ -13,6 +14,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -28,6 +30,9 @@ import kotlinx.coroutines.launch
 class GuardService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var watching: Job? = null
+
+    /** 目前顯示中的通知（已套用使用者選的樣式與最近修補）。重新進入前景時沿用它。 */
+    private var notification: Notification? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -51,10 +56,15 @@ class GuardService : Service() {
         return START_STICKY
     }
 
-    /** 進入前景並開始監聽；可以重複呼叫。 */
+    /**
+     * 進入前景並開始監聽；可以重複呼叫。
+     *
+     * onCreate 之後通常緊接著 onStartCommand。如果這時設定已經讀好、通知已更新成使用者選的樣式，
+     * 重新進入前景要沿用那則通知；用預設樣式會把它蓋掉，而設定沒有變化，之後也不會再更新回來。
+     */
     private fun startGuarding() {
         GuardNotifications.ensureChannel(this)
-        startForeground(GuardNotifications.ID, GuardNotifications.build(this, null))
+        startForeground(GuardNotifications.ID, notification ?: GuardNotifications.build(this, null))
         if (watching == null) watching = scope.launch { watch() }
     }
 
@@ -80,9 +90,13 @@ class GuardService : Service() {
         }
         launch { screenEvents(this@GuardService).collect { ensure(it) } }
         launch {
-            container.guardState.state.map { it.lastPatch }.distinctUntilChanged().collect { lastPatch ->
-                Diag.i("notification update")
-                GuardNotifications.update(this@GuardService, lastPatch)
+            combine(
+                container.guardState.state.map { it.lastPatch }.distinctUntilChanged(),
+                container.appearance.notificationStyle,
+                container.appearance.notificationPosition,
+            ) { lastPatch, style, position -> Triple(lastPatch, style, position) }.collect { (lastPatch, style, position) ->
+                Diag.i("notification update style=$style position=$position")
+                notification = GuardNotifications.update(this@GuardService, lastPatch, style, position)
             }
         }
         launch {
@@ -92,8 +106,11 @@ class GuardService : Service() {
         }
         launch { ensure(Trigger.SERVICE_START) }
 
-        // 自我監測：上次程序為什麼被結束，以及服務存活期間有沒有被凍結。
-        launch { container.selfMonitor.reportPreviousExits() }
+        // 自我監測：上次程序為什麼被結束、這次怎麼啟動的，以及服務存活期間有沒有被凍結。
+        launch {
+            container.selfMonitor.reportPreviousExits()
+            container.selfMonitor.reportProcessStart()
+        }
         launch { container.selfMonitor.watchForPauses() }
         Diag.i("watch launched")
     }
