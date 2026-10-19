@@ -10,7 +10,13 @@ import com.nakisuzu.suzumori.fakes.FakeEventLog
 import com.nakisuzu.suzumori.fakes.FakeGmsSignals
 import com.nakisuzu.suzumori.fakes.FakeGuardStateStore
 import com.nakisuzu.suzumori.fakes.FakeSettingsStore
-import com.nakisuzu.suzumori.fakes.ZhTwGuardText
+import com.nakisuzu.suzumori.core.log.LogKey
+import com.nakisuzu.suzumori.core.log.LogText
+import com.nakisuzu.suzumori.core.log.clauses
+import com.nakisuzu.suzumori.core.log.key
+import com.nakisuzu.suzumori.core.log.list
+import com.nakisuzu.suzumori.core.log.msg
+import com.nakisuzu.suzumori.core.log.raw
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -54,7 +60,6 @@ class GuardControllerTest {
             states = states,
             bootCounter = boot,
             log = log,
-            text = ZhTwGuardText,
             selfPackage = self,
             clock = { scope.testScheduler.currentTime },
         )
@@ -104,7 +109,7 @@ class GuardControllerTest {
             override fun sendReconnect() = h.signals.sendReconnect().also { reconnectAt = testScheduler.currentTime }
         }
         val controller = GuardController(
-            h.settings, signals, h.baselines, h.configs, h.states, h.boot, h.log, ZhTwGuardText, self,
+            h.settings, signals, h.baselines, h.configs, h.states, h.boot, h.log, self,
             clock = { testScheduler.currentTime },
         )
 
@@ -134,7 +139,7 @@ class GuardControllerTest {
 
         assertEquals("com.a, $gms,$self", h.settings.values[millet])
         assertTrue(result.patched)
-        assertEquals("MILLET 補回 本 App", h.states.value.lastPatch?.summary)
+        assertEquals(clauses(listOf(msg(LogKey.MILLET_RESTORED, list(listOf(msg(LogKey.SELF_APP)))))), h.states.value.lastPatch?.summary)
     }
 
     @Test
@@ -233,7 +238,7 @@ class GuardControllerTest {
         h.settings.externalWrite(millet, "com.a")
         assertTrue(h.controller.ensure(Trigger.MILLET_CHANGED).paused)
         assertEquals(limit, h.settings.writesTo(millet).size)
-        assertTrue(h.log.all.any { it.result.contains("暫停") })
+        assertTrue(h.log.all.any { it.result == msg(LogKey.RATE_LIMITED, raw(10), raw(5)) })
 
         advanceTimeBy(GuardPolicy().pauseMillis)
         h.controller.ensure(Trigger.MILLET_CHANGED)
@@ -249,7 +254,9 @@ class GuardControllerTest {
         val result = h.controller.ensure(Trigger.MILLET_CHANGED)
 
         assertTrue(result.failed)
-        assertEquals(4, h.log.all.count { it.result.startsWith("例外：java.lang.IllegalArgumentException") })
+        val exceptions = h.log.all.filter { it.result.key == LogKey.EXCEPTION }
+        assertEquals(4, exceptions.size)
+        assertTrue(exceptions.all { ((it.result as LogText.Message).args.single() as LogText.Raw).text.startsWith("java.lang.IllegalArgumentException") })
     }
 
     @Test
@@ -261,7 +268,7 @@ class GuardControllerTest {
 
         assertTrue(h.settings.writes.isEmpty())
         assertTrue(result.failed)
-        assertTrue(h.log.all.any { it.result.contains("修改系統設定") })
+        assertTrue(h.log.all.any { it.result.key == LogKey.NO_WRITE_PERMISSION })
     }
 
     @Test
@@ -291,9 +298,15 @@ class GuardControllerTest {
         h.settings.externalWrite(millet, "com.a, com.revanced")
         h.controller.ensure(Trigger.MILLET_CHANGED)
 
-        val detected = h.log.all.single { it.action.startsWith("偵測到外部變更") }
-        assertEquals("偵測到外部變更（移除 $gms、$self；新增 com.revanced）", detected.action)
-        assertEquals("GMS 不在名單中", detected.result)
+        val detected = h.log.all.single { it.action.key == LogKey.EXTERNAL_CHANGE }
+        val diff = clauses(
+            listOf(
+                msg(LogKey.REMOVED_MEMBERS, list(listOf(raw(gms), raw(self)))),
+                msg(LogKey.ADDED_MEMBERS, list(listOf(raw("com.revanced")))),
+            ),
+        )
+        assertEquals(msg(LogKey.EXTERNAL_CHANGE, diff), detected.action)
+        assertEquals(msg(LogKey.GMS_NOT_IN_LIST), detected.result)
         assertEquals("com.a, $gms, $self", detected.before)
         assertEquals("com.a, com.revanced", detected.after)
     }

@@ -50,12 +50,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nakisuzu.suzumori.R
-import com.nakisuzu.suzumori.core.guard.Trigger
 import com.nakisuzu.suzumori.core.log.EventEntry
 import com.nakisuzu.suzumori.core.log.EventLevel
-import com.nakisuzu.suzumori.core.log.ExitReasons
 import com.nakisuzu.suzumori.platform.Labels
 import com.nakisuzu.suzumori.platform.LogExporter
+import com.nakisuzu.suzumori.platform.LogTexts
 import com.nakisuzu.suzumori.ui.components.Entrance
 import com.nakisuzu.suzumori.ui.components.Footnote
 import com.nakisuzu.suzumori.ui.components.IconBadge
@@ -214,14 +213,9 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val hasValues = entry.before != null || entry.after != null
     val tone = levelColor(entry.level)
-    // 早期版本認得的結束原因較少，當時存下的是「原因：系統說明」；現在認得的說明換成文字。
-    val result = remember(entry, context) {
-        if (entry.trigger == Trigger.SELF_MONITOR.name) {
-            ExitReasons.parseResult(entry.result)?.let { Labels.exit(context, it) } ?: entry.result
-        } else {
-            entry.result
-        }
-    }
+    // 紀錄存的是與語言無關的代碼，顯示時才組成目前語言的句子。
+    val action = remember(entry, context) { LogTexts.render(context, entry.action) }
+    val result = remember(entry, context) { LogTexts.render(context, entry.result) }
     val trigger = remember(entry.trigger, context) { Labels.trigger(context, entry.trigger) }
     val rail = colors.divider
     val chevron by animateFloatAsState(if (expanded) 180f else 0f, tween(350, easing = Motion.Emphasized), label = "chevron")
@@ -278,7 +272,7 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
                     Text(text = trigger, fontSize = 11.sp, color = colors.onSurfaceMuted)
                 }
             }
-            Text(text = entry.action, fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurface)
+            Text(text = action, fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurface)
             Text(text = result, fontSize = 13.sp, lineHeight = 20.sp, color = tone)
             entry.key?.let {
                 Text(text = it, fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = colors.onSurfaceMuted)
@@ -299,8 +293,8 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            entry.before?.let { ValueBlock(stringResource(R.string.log_before), it) }
-                            entry.after?.let { ValueBlock(stringResource(R.string.log_after), it) }
+                            entry.before?.let { ValueBlock(stringResource(R.string.log_before), LogTexts.value(context, it)) }
+                            entry.after?.let { ValueBlock(stringResource(R.string.log_after), LogTexts.value(context, it)) }
                         }
                     }
                 }

@@ -110,11 +110,11 @@
     <string name="yesterday">昨天</string>
     <string name="date_month_day_pattern">M 月 d 日</string>
     <string name="date_short_pattern">M/d</string>
-    <string name="duration_seconds">%d 秒</string>
-    <string name="duration_minutes">%d 分</string>
-    <string name="duration_hours">%d 小時</string>
-    <string name="duration_hours_minutes">%1$d 小時 %2$d 分</string>
-    <string name="duration_days">%d 天</string>
+    <string name="duration_seconds">%s 秒</string>
+    <string name="duration_minutes">%s 分</string>
+    <string name="duration_hours">%s 小時</string>
+    <string name="duration_hours_minutes">%1$s 小時 %2$s 分</string>
+    <string name="duration_days">%s 天</string>
 
     <!-- 匯出的事件紀錄 -->
     <string name="export_subject">Suzumori 事件紀錄</string>
@@ -155,7 +155,7 @@
     <string name="cleanup_footnote">解除安裝前請先清理。解除安裝後 App 就沒有機會再執行清理，留在遊戲白名單中的項目會一直生效。</string>
 
     <!-- 關於頁 -->
-    <string name="about_version">版本 %1$s（%2$d）</string>
+    <string name="about_version">版本 %s</string>
     <string name="about_version_unknown">版本未知</string>
     <string name="about_write_permission">寫入權限</string>
     <string name="about_write_permission_hint">點此前往開啟</string>
@@ -214,8 +214,8 @@
     <string name="log_no_baseline">沒有基準紀錄，本 App 沒有寫入過遊戲白名單</string>
     <string name="log_nothing_owned">名單中沒有本 App 加入的項目</string>
     <string name="log_no_write_permission">沒有「修改系統設定」權限，無法寫入</string>
-    <string name="log_retry">%1$s（第 %2$d 次重試）</string>
-    <string name="log_rate_limited">每分鐘修補超過 %1$d 次，暫停 %2$d 分鐘</string>
+    <string name="log_retry">%1$s（第 %2$s 次重試）</string>
+    <string name="log_rate_limited">每分鐘修補超過 %1$s 次，暫停 %2$s 分鐘</string>
     <string name="log_exception">例外：%s</string>
     <string name="log_success">成功</string>
     <string name="log_verify_failed">驗證失敗</string>
@@ -230,7 +230,7 @@
     <string name="log_unfreeze_summary">已送出解凍與重連</string>
     <string name="log_sent">%s：已送出</string>
     <string name="log_send_exception">%1$s：例外 %2$s</string>
-    <string name="log_truncated">…（共 %d 字）</string>
+    <string name="log_truncated">…（共 %s 字）</string>
 
     <!-- 自我監測 -->
     <string name="self_exit_action">程序曾被結束（%s）</string>
@@ -242,8 +242,8 @@
     <string name="self_start_unknown">啟動原因不明</string>
     <string name="self_since_last_exit">%1$s・距離上次被結束 %2$s</string>
     <string name="self_paused_action">本 App 曾被暫停</string>
-    <string name="self_paused_result">約 %d 秒（期間 CPU 醒著，但本 App 沒有執行）</string>
-    <string name="self_paused_summary">被暫停約 %d 秒</string>
+    <string name="self_paused_result">約 %s 秒（期間 CPU 醒著，但本 App 沒有執行）</string>
+    <string name="self_paused_summary">被暫停約 %s 秒</string>
     <string name="start_service">系統重新啟動背景服務</string>
     <string name="start_boot">開機後自動啟動</string>
     <string name="start_package_replaced">App 更新後重新啟動</string>
@@ -256,7 +256,7 @@
     <string name="start_launcher">從桌面開啟</string>
     <string name="start_recents">從多工畫面開啟</string>
     <string name="start_activity">開啟 App 畫面</string>
-    <string name="start_other">其他原因（%d）</string>
+    <string name="start_other">其他原因（%s）</string>
     <string name="exit_self">自行結束</string>
     <string name="exit_signaled">被訊號終止（常見於系統或省電機制殺掉程序）</string>
     <string name="exit_low_memory">記憶體不足</string>
@@ -273,7 +273,7 @@
     <string name="exit_freezer">凍結期間被結束</string>
     <string name="exit_package_state_change">App 狀態變更</string>
     <string name="exit_package_updated">App 更新</string>
-    <string name="exit_unknown">未知原因（%d）</string>
+    <string name="exit_unknown">未知原因（%s）</string>
     <string name="exit_force_stopped_by">被%s強制停止</string>
     <string name="clean_swipe_up">從多工畫面滑掉</string>
     <string name="clean_one_key">在多工畫面一鍵清理</string>

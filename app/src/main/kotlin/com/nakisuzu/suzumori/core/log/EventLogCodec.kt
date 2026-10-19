@@ -6,15 +6,15 @@ package com.nakisuzu.suzumori.core.log
  * 欄位內的反斜線、Tab、換行會被跳脫，null 以 `\N` 表示，所以每一行都能獨立解析，
  * 寫到一半斷電也只會損失最後一行。
  *
- * 第 2 版多了結果的性質（[EventLevel]），觸發原因改存 `Trigger` 的名稱。
- * 第 1 版的紀錄仍可讀取：觸發原因從當時的中文標籤對回名稱，結果的性質從當時的中文文字推斷。
+ * 第 3 版的動作與結果是 [LogTextCodec] 編碼的英文代碼，與語言無關。舊版仍可讀取：
+ * - 第 2 版的動作與結果是當時的介面語言寫成的句子，認得的繁體中文句型會轉成 [LogText]。
+ * - 第 1 版另外沒有結果的性質，觸發原因存的是中文標籤。
  */
 object EventLogCodec {
-    private const val VERSION = "2"
-    private const val LEGACY_VERSION = "1"
+    private const val VERSION = "3"
     private const val NULL = "\\N"
     private const val FIELD_COUNT = 9
-    private const val LEGACY_FIELD_COUNT = 8
+    private const val V1_FIELD_COUNT = 8
 
     fun encode(entry: EventEntry): String = listOf(
         VERSION,
@@ -23,31 +23,45 @@ object EventLogCodec {
         entry.key,
         entry.before,
         entry.after,
-        entry.action,
-        entry.result,
+        LogTextCodec.encode(entry.action),
+        LogTextCodec.encode(entry.result),
         entry.level.name,
     ).joinToString("\t") { escape(it) }
 
     /** 無法解析的行回傳 null。 */
     fun decode(line: String): EventEntry? {
         val fields = line.split('\t')
-        val legacy = when {
-            fields.size == FIELD_COUNT && fields[0] == VERSION -> false
-            fields.size == LEGACY_FIELD_COUNT && fields[0] == LEGACY_VERSION -> true
+        val version = when {
+            fields.size == FIELD_COUNT && fields[0] in setOf("2", "3") -> fields[0].toInt()
+            fields.size == V1_FIELD_COUNT && fields[0] == "1" -> 1
             else -> return null
         }
         val values = fields.map(::unescape)
+        val time = values[1]?.toLongOrNull() ?: return null
         val trigger = values[2] ?: return null
+        val action = values[6] ?: return null
         val result = values[7] ?: return null
+        if (version == 3) {
+            return EventEntry(
+                timeMillis = time,
+                trigger = trigger,
+                key = values[3],
+                before = values[4],
+                after = values[5],
+                action = LogTextCodec.decode(action) ?: raw(action),
+                result = LogTextCodec.decode(result) ?: raw(result),
+                level = EventLevel.entries.firstOrNull { it.name == values[8] } ?: EventLevel.INFO,
+            )
+        }
         return EventEntry(
-            timeMillis = values[1]?.toLongOrNull() ?: return null,
-            trigger = if (legacy) LEGACY_TRIGGERS[trigger] ?: trigger else trigger,
+            timeMillis = time,
+            trigger = if (version == 1) LEGACY_TRIGGERS[trigger] ?: trigger else trigger,
             key = values[3],
-            before = values[4],
-            after = values[5],
-            action = values[6] ?: return null,
-            result = result,
-            level = if (legacy) legacyLevel(result) else EventLevel.entries.firstOrNull { it.name == values[8] } ?: EventLevel.INFO,
+            before = LegacyLogText.value(values[4]),
+            after = LegacyLogText.value(values[5]),
+            action = LegacyLogText.parse(action),
+            result = LegacyLogText.parse(result),
+            level = if (version == 1) legacyLevel(result) else EventLevel.entries.firstOrNull { it.name == values[8] } ?: EventLevel.INFO,
         )
     }
 

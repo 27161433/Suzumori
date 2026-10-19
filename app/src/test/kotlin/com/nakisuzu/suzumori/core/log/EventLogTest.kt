@@ -14,14 +14,14 @@ class EventLogTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private fun entry(time: Long, result: String = "成功") = EventEntry(
+    private fun entry(time: Long) = EventEntry(
         timeMillis = time,
         trigger = "MILLET_CHANGED",
         key = "MILLET_NO_RESTRICT_APP",
         before = "com.a, com.b",
         after = "com.a, com.b,com.google.android.gms",
-        action = "追加 GMS",
-        result = result,
+        action = msg(LogKey.APPEND, list(listOf(raw("GMS")))),
+        result = msg(LogKey.SUCCESS),
         level = EventLevel.SUCCESS,
     )
 
@@ -33,17 +33,18 @@ class EventLogTest {
             key = null,
             before = "第一行\n第二行\r\n反斜線 \\ 結尾\\",
             after = "",
-            action = "\\N 不是 null",
-            result = "\\t 字面",
+            action = raw("\\N 不是 null，\"引號\"與 (括號,逗號)"),
+            result = msg(LogKey.EXCEPTION, raw("java.lang.IllegalStateException: a\tb")),
         )
         assertEquals(tricky, EventLogCodec.decode(EventLogCodec.encode(tricky)))
         assertEquals(entry(1), EventLogCodec.decode(EventLogCodec.encode(entry(1))))
     }
 
     @Test
-    fun `編碼結果只有一行`() {
+    fun `編碼結果只有一行，動作與結果存的是英文代碼`() {
         val encoded = EventLogCodec.encode(entry(1).copy(before = "a\nb\nc"))
         assertTrue('\n' !in encoded)
+        assertTrue(encoded.contains("\tAPPEND(LIST(\"GMS\"))\tSUCCESS\tSUCCESS"))
     }
 
     @Test
@@ -91,32 +92,44 @@ class EventLogTest {
 
     @Test
     fun `截斷過長的值並標示原本長度`() {
-        val suffix = { total: Int -> "…（共 $total 字）" }
-        assertEquals("abc", truncateForLog("abc", suffix, limit = 5))
-        assertEquals("abcde…（共 7 字）", truncateForLog("abcdefg", suffix, limit = 5))
-        assertNull(truncateForLog(null, suffix))
+        assertEquals("abc", truncateForLog("abc", limit = 5))
+        assertEquals("abcde…(7)", truncateForLog("abcdefg", limit = 5))
+        assertNull(truncateForLog(null))
+        assertEquals("7", TRUNCATED_SUFFIX.find("abcde…(7)")?.groupValues?.get(1))
     }
 
     @Test
-    fun `第 1 版的紀錄仍可讀取，觸發原因對回名稱，結果的性質從文字推斷`() {
-        val ok = EventLogCodec.decode("1\t5\tMILLET 名單變更\tMILLET_NO_RESTRICT_APP\t\\N\t\\N\t追加 GMS\t成功")
-        assertEquals("MILLET_CHANGED", ok?.trigger)
-        assertEquals(EventLevel.SUCCESS, ok?.level)
+    fun `第 1 版的紀錄仍可讀取，觸發原因對回名稱，句子轉成代碼，結果的性質從文字推斷`() {
+        val ok = EventLogCodec.decode("1\t5\tMILLET 名單變更\tMILLET_NO_RESTRICT_APP\t\\N\t\\N\t追加 GMS\t成功")!!
+        assertEquals("MILLET_CHANGED", ok.trigger)
+        assertEquals(msg(LogKey.APPEND, list(listOf(raw("GMS")))), ok.action)
+        assertEquals(msg(LogKey.SUCCESS), ok.result)
+        assertEquals(EventLevel.SUCCESS, ok.level)
 
-        val failed = EventLogCodec.decode("1\t6\t開機（解鎖前）\t\\N\t\\N\t\\N\t追加 GMS\t驗證失敗")
-        assertEquals("LOCKED_BOOT", failed?.trigger)
-        assertEquals(EventLevel.WARNING, failed?.level)
+        val failed = EventLogCodec.decode("1\t6\t開機（解鎖前）\t\\N\t\\N\t\\N\t追加 GMS\t驗證失敗")!!
+        assertEquals("LOCKED_BOOT", failed.trigger)
+        assertEquals(EventLevel.WARNING, failed.level)
 
-        val unknown = EventLogCodec.decode("1\t7\t未來的觸發\t\\N\t\\N\t\\N\t送出解凍廣播\tGCM_RECONNECT：已送出")
-        assertEquals("未來的觸發", unknown?.trigger)
-        assertEquals(EventLevel.INFO, unknown?.level)
+        val unknown = EventLogCodec.decode("1\t7\t未來的觸發\t\\N\t\\N\t\\N\t送出解凍廣播\t看不懂的結果")!!
+        assertEquals("未來的觸發", unknown.trigger)
+        assertEquals(raw("看不懂的結果"), unknown.result)
+        assertEquals(EventLevel.INFO, unknown.level)
     }
 
     @Test
-    fun `重新寫入時改用第 2 版`() {
-        val legacy = EventLogCodec.decode("1\t5\t自我監測\t\\N\t\\N\t\\N\t本 App 曾被暫停\t約 12 秒")!!
+    fun `第 2 版的紀錄保留性質，舊的截斷標記換成新格式`() {
+        val entry = EventLogCodec.decode("2\t5\tMILLET_CHANGED\tk\tabc…（共 512 字）\t\\N\t追加 本 App\t成功\tSUCCESS")!!
+        assertEquals("abc…(512)", entry.before)
+        assertEquals(msg(LogKey.APPEND, list(listOf(msg(LogKey.SELF_APP)))), entry.action)
+        assertEquals(EventLevel.SUCCESS, entry.level)
+    }
+
+    @Test
+    fun `重新寫入時改用第 3 版`() {
+        val legacy = EventLogCodec.decode("1\t5\t自我監測\t\\N\t\\N\t\\N\t本 App 曾被暫停\t約 12 秒（期間 CPU 醒著，但本 App 沒有執行）")!!
         val encoded = EventLogCodec.encode(legacy)
-        assertTrue(encoded.startsWith("2\t5\tSELF_MONITOR\t"))
+        assertTrue(encoded.startsWith("3\t5\tSELF_MONITOR\t"))
         assertEquals(legacy, EventLogCodec.decode(encoded))
+        assertEquals(msg(LogKey.PAUSED_RESULT, raw("12")), legacy.result)
     }
 }

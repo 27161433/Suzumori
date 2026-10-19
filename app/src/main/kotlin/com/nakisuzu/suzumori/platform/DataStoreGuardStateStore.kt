@@ -11,6 +11,8 @@ import com.nakisuzu.suzumori.core.guard.ActionRecord
 import com.nakisuzu.suzumori.core.guard.GuardState
 import com.nakisuzu.suzumori.core.guard.GuardStateStore
 import com.nakisuzu.suzumori.core.guard.Trigger
+import com.nakisuzu.suzumori.core.log.LegacyLogText
+import com.nakisuzu.suzumori.core.log.LogTextCodec
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -47,8 +49,9 @@ class DataStoreGuardStateStore(private val dataStore: DataStore<Preferences>) : 
     private fun Preferences.record(prefix: String): ActionRecord? {
         val at = this[longPreferencesKey("${prefix}_at")] ?: return null
         val trigger = Trigger.fromName(this[stringPreferencesKey("${prefix}_trigger")]) ?: return null
+        // 摘要以 LogTextCodec 編碼保存；1.0.0 以前存的是繁體中文句子。
         val summary = this[stringPreferencesKey("${prefix}_summary")] ?: return null
-        return ActionRecord(at, trigger, summary)
+        return ActionRecord(at, trigger, LogTextCodec.decode(summary) ?: LegacyLogText.parse(summary))
     }
 
     private fun MutablePreferences.putRecord(prefix: String, record: ActionRecord?) {
@@ -62,7 +65,7 @@ class DataStoreGuardStateStore(private val dataStore: DataStore<Preferences>) : 
         } else {
             this[at] = record.atMillis
             this[trigger] = record.trigger.name
-            this[summary] = record.summary
+            this[summary] = LogTextCodec.encode(record.summary)
         }
     }
 

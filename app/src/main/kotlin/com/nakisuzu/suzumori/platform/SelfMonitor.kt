@@ -8,8 +8,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Process
 import android.os.SystemClock
-import androidx.annotation.StringRes
-import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.core.guard.ActionRecord
 import com.nakisuzu.suzumori.core.guard.GuardStateStore
 import com.nakisuzu.suzumori.core.guard.PauseDetector
@@ -18,6 +16,11 @@ import com.nakisuzu.suzumori.core.log.EventEntry
 import com.nakisuzu.suzumori.core.log.EventLog
 import com.nakisuzu.suzumori.core.log.EventLogText
 import com.nakisuzu.suzumori.core.log.ExitReasons
+import com.nakisuzu.suzumori.core.log.LogKey
+import com.nakisuzu.suzumori.core.log.LogText
+import com.nakisuzu.suzumori.core.log.duration
+import com.nakisuzu.suzumori.core.log.msg
+import com.nakisuzu.suzumori.core.log.raw
 import com.nakisuzu.suzumori.core.log.truncateForLog
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,11 +50,11 @@ class SelfMonitor(
 
         for (exit in exits) {
             record(
-                action = s(R.string.self_exit_action, EventLogText.formatTime(exit.timestamp)),
-                // 認得的系統說明直接換成文字；不認得的保留原因與原文，方便追查。
+                action = msg(LogKey.EXIT_ACTION, raw(EventLogText.formatTime(exit.timestamp))),
+                // 認得的系統說明直接換成對應的訊息；不認得的保留原因與原文，方便追查。
                 result = describe(exit) ?: run {
-                    val raw = truncateForLog(exit.description?.takeIf { it.isNotBlank() }, { s(R.string.log_truncated, it) }, limit = 120)
-                    if (raw == null) s(reasonLabel(exit.reason), exit.reason) else s(R.string.self_exit_with_description, s(reasonLabel(exit.reason), exit.reason), raw)
+                    val description = truncateForLog(exit.description?.takeIf { it.isNotBlank() }, limit = 120)
+                    if (description == null) reasonLabel(exit.reason) else msg(LogKey.EXIT_WITH_DESCRIPTION, reasonLabel(exit.reason), raw(description))
                 },
             )
         }
@@ -63,8 +66,8 @@ class SelfMonitor(
         states.update { state ->
             val issue = when {
                 notable != null -> {
-                    val summary = describe(notable) ?: s(reasonLabel(notable.reason), notable.reason)
-                    ActionRecord(notable.timestamp, Trigger.SELF_MONITOR, s(R.string.self_killed_summary, summary))
+                    val summary = describe(notable) ?: reasonLabel(notable.reason)
+                    ActionRecord(notable.timestamp, Trigger.SELF_MONITOR, msg(LogKey.KILLED_SUMMARY, summary))
                 }
                 // 最近一次被結束後很快就恢復，表示現在運作正常，之前留下的「被結束」狀態可以清掉；被暫停的紀錄保留。
                 recovered && state.lastSelfIssue?.let { isExitIssue(it, state.lastExitReportedAtMillis) } == true -> null
@@ -74,13 +77,13 @@ class SelfMonitor(
         }
     }
 
-    private fun describe(exit: ApplicationExitInfo): String? = ExitReasons.parse(exit.description)?.let { Labels.exit(context, it) }
+    private fun describe(exit: ApplicationExitInfo): LogText? = ExitReasons.parse(exit.description)?.let(ExitReasons::toLogText)
 
     /**
      * [issue] 是不是「被結束」的狀態（而不是「被暫停」）。
      *
      * 被結束的狀態用的是那次結束的時間，一定不晚於已經記錄過的最新結束時間 [lastExitReportedAtMillis]；
-     * 被暫停是在之後的程序存活期間偵測到的，時間一定比較晚。用時間判斷，不依賴摘要文字的語言。
+     * 被暫停是在之後的程序存活期間偵測到的，時間一定比較晚。
      */
     private fun isExitIssue(issue: ActionRecord, lastExitReportedAtMillis: Long?): Boolean =
         lastExitReportedAtMillis != null && issue.atMillis <= lastExitReportedAtMillis
@@ -98,22 +101,21 @@ class SelfMonitor(
             .firstOrNull { it.timestamp <= startedAt }
         val reason = startReason(activityManager)
         Diag.i("process start reason=${reason?.first} lastExit=${lastExit?.timestamp}")
-        val reasonText = reason?.first ?: s(R.string.self_start_unknown)
+        val reasonText = reason?.first ?: msg(LogKey.START_UNKNOWN)
         record(
-            action = s(
+            action = msg(
                 when (reason?.second) {
-                    true -> R.string.self_auto_restarted
-                    false -> R.string.self_user_opened
-                    null -> R.string.self_started
+                    true -> LogKey.AUTO_RESTARTED
+                    false -> LogKey.USER_OPENED
+                    null -> LogKey.STARTED
                 },
             ),
-            result = lastExit?.let { s(R.string.self_since_last_exit, reasonText, Labels.duration(context, startedAt - it.timestamp)) }
-                ?: reasonText,
+            result = lastExit?.let { msg(LogKey.SINCE_LAST_EXIT, reasonText, duration(startedAt - it.timestamp)) } ?: reasonText,
         )
     }
 
-    /** 啟動原因的說明，以及是不是自動啟動（不是使用者開啟畫面）。Android 15 以前讀不到，回傳 null。 */
-    private fun startReason(activityManager: ActivityManager): Pair<String, Boolean>? {
+    /** 啟動原因，以及是不是自動啟動（不是使用者開啟畫面）。Android 15 以前讀不到，回傳 null。 */
+    private fun startReason(activityManager: ActivityManager): Pair<LogText, Boolean>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return null
         // 清單新的在前，也包含程序已存在時開啟畫面（HOT）的紀錄，要找的是建立這個程序的冷啟動。
         // 這時啟動流程可能還沒走完，系統尚未填入 pid（為 0），所以 0 也算。
@@ -122,22 +124,22 @@ class SelfMonitor(
             .firstOrNull { it.startType == ApplicationStartInfo.START_TYPE_COLD && it.pid in setOf(0, Process.myPid()) }
             ?: return null
         return when (info.reason) {
-            ApplicationStartInfo.START_REASON_SERVICE -> s(R.string.start_service) to true
-            ApplicationStartInfo.START_REASON_BOOT_COMPLETE -> s(R.string.start_boot) to true
+            ApplicationStartInfo.START_REASON_SERVICE -> msg(LogKey.START_SERVICE) to true
+            ApplicationStartInfo.START_REASON_BOOT_COMPLETE -> msg(LogKey.START_BOOT) to true
             ApplicationStartInfo.START_REASON_BROADCAST -> when (info.intent?.action) {
-                Intent.ACTION_MY_PACKAGE_REPLACED -> s(R.string.start_package_replaced) to true
-                Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_LOCKED_BOOT_COMPLETED -> s(R.string.start_boot) to true
-                else -> s(R.string.start_broadcast) to true
+                Intent.ACTION_MY_PACKAGE_REPLACED -> msg(LogKey.START_PACKAGE_REPLACED) to true
+                Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_LOCKED_BOOT_COMPLETED -> msg(LogKey.START_BOOT) to true
+                else -> msg(LogKey.START_BROADCAST) to true
             }
-            ApplicationStartInfo.START_REASON_JOB -> s(R.string.start_job) to true
-            ApplicationStartInfo.START_REASON_ALARM -> s(R.string.start_alarm) to true
-            ApplicationStartInfo.START_REASON_PUSH -> s(R.string.start_push) to true
-            ApplicationStartInfo.START_REASON_CONTENT_PROVIDER -> s(R.string.start_content_provider) to true
-            ApplicationStartInfo.START_REASON_BACKUP -> s(R.string.start_backup) to true
-            ApplicationStartInfo.START_REASON_LAUNCHER -> s(R.string.start_launcher) to false
-            ApplicationStartInfo.START_REASON_LAUNCHER_RECENTS -> s(R.string.start_recents) to false
-            ApplicationStartInfo.START_REASON_START_ACTIVITY -> s(R.string.start_activity) to false
-            else -> s(R.string.start_other, info.reason) to true
+            ApplicationStartInfo.START_REASON_JOB -> msg(LogKey.START_JOB) to true
+            ApplicationStartInfo.START_REASON_ALARM -> msg(LogKey.START_ALARM) to true
+            ApplicationStartInfo.START_REASON_PUSH -> msg(LogKey.START_PUSH) to true
+            ApplicationStartInfo.START_REASON_CONTENT_PROVIDER -> msg(LogKey.START_CONTENT_PROVIDER) to true
+            ApplicationStartInfo.START_REASON_BACKUP -> msg(LogKey.START_BACKUP) to true
+            ApplicationStartInfo.START_REASON_LAUNCHER -> msg(LogKey.START_LAUNCHER) to false
+            ApplicationStartInfo.START_REASON_LAUNCHER_RECENTS -> msg(LogKey.START_RECENTS) to false
+            ApplicationStartInfo.START_REASON_START_ACTIVITY -> msg(LogKey.START_ACTIVITY) to false
+            else -> msg(LogKey.START_OTHER, raw(info.reason)) to true
         }
     }
 
@@ -150,20 +152,14 @@ class SelfMonitor(
             val paused = detector.onTick(SystemClock.uptimeMillis()) ?: continue
             val seconds = paused / 1000
             Diag.i("paused for about $seconds s")
-            record(action = s(R.string.self_paused_action), result = s(R.string.self_paused_result, seconds.toInt()))
+            record(action = msg(LogKey.PAUSED_ACTION), result = msg(LogKey.PAUSED_RESULT, raw(seconds)))
             states.update {
-                it.copy(
-                    lastSelfIssue = ActionRecord(
-                        System.currentTimeMillis(),
-                        Trigger.SELF_MONITOR,
-                        s(R.string.self_paused_summary, seconds.toInt()),
-                    ),
-                )
+                it.copy(lastSelfIssue = ActionRecord(System.currentTimeMillis(), Trigger.SELF_MONITOR, msg(LogKey.PAUSED_SUMMARY, raw(seconds))))
             }
         }
     }
 
-    private suspend fun record(action: String, result: String) {
+    private suspend fun record(action: LogText, result: LogText) {
         log.append(
             EventEntry(
                 timeMillis = System.currentTimeMillis(),
@@ -177,28 +173,24 @@ class SelfMonitor(
         )
     }
 
-    private fun s(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
-
-    /** 程序結束原因的字串資源。只有「未知原因」帶參數（原因代碼），其他字串會忽略多給的參數。 */
-    @StringRes
-    private fun reasonLabel(reason: Int): Int = when (reason) {
-        ApplicationExitInfo.REASON_EXIT_SELF -> R.string.exit_self
-        ApplicationExitInfo.REASON_SIGNALED -> R.string.exit_signaled
-        ApplicationExitInfo.REASON_LOW_MEMORY -> R.string.exit_low_memory
-        ApplicationExitInfo.REASON_CRASH -> R.string.exit_crash
-        ApplicationExitInfo.REASON_CRASH_NATIVE -> R.string.exit_crash_native
-        ApplicationExitInfo.REASON_ANR -> R.string.exit_anr
-        ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> R.string.exit_initialization_failure
-        ApplicationExitInfo.REASON_PERMISSION_CHANGE -> R.string.exit_permission_change
-        ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> R.string.exit_excessive_resource_usage
-        ApplicationExitInfo.REASON_USER_REQUESTED -> R.string.exit_user_requested
-        ApplicationExitInfo.REASON_USER_STOPPED -> R.string.exit_user_stopped
-        ApplicationExitInfo.REASON_DEPENDENCY_DIED -> R.string.exit_dependency_died
-        ApplicationExitInfo.REASON_OTHER -> R.string.exit_other
-        REASON_FREEZER -> R.string.exit_freezer
-        REASON_PACKAGE_STATE_CHANGE -> R.string.exit_package_state_change
-        REASON_PACKAGE_UPDATED -> R.string.exit_package_updated
-        else -> R.string.exit_unknown
+    private fun reasonLabel(reason: Int): LogText = when (reason) {
+        ApplicationExitInfo.REASON_EXIT_SELF -> msg(LogKey.EXIT_SELF)
+        ApplicationExitInfo.REASON_SIGNALED -> msg(LogKey.EXIT_SIGNALED)
+        ApplicationExitInfo.REASON_LOW_MEMORY -> msg(LogKey.EXIT_LOW_MEMORY)
+        ApplicationExitInfo.REASON_CRASH -> msg(LogKey.EXIT_CRASH)
+        ApplicationExitInfo.REASON_CRASH_NATIVE -> msg(LogKey.EXIT_CRASH_NATIVE)
+        ApplicationExitInfo.REASON_ANR -> msg(LogKey.EXIT_ANR)
+        ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> msg(LogKey.EXIT_INITIALIZATION_FAILURE)
+        ApplicationExitInfo.REASON_PERMISSION_CHANGE -> msg(LogKey.EXIT_PERMISSION_CHANGE)
+        ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> msg(LogKey.EXIT_EXCESSIVE_RESOURCE_USAGE)
+        ApplicationExitInfo.REASON_USER_REQUESTED -> msg(LogKey.EXIT_USER_REQUESTED)
+        ApplicationExitInfo.REASON_USER_STOPPED -> msg(LogKey.EXIT_USER_STOPPED)
+        ApplicationExitInfo.REASON_DEPENDENCY_DIED -> msg(LogKey.EXIT_DEPENDENCY_DIED)
+        ApplicationExitInfo.REASON_OTHER -> msg(LogKey.EXIT_OTHER)
+        REASON_FREEZER -> msg(LogKey.EXIT_FREEZER)
+        REASON_PACKAGE_STATE_CHANGE -> msg(LogKey.EXIT_PACKAGE_STATE_CHANGE)
+        REASON_PACKAGE_UPDATED -> msg(LogKey.EXIT_PACKAGE_UPDATED)
+        else -> msg(LogKey.EXIT_UNKNOWN, raw(reason))
     }
 
     private val startReported = AtomicBoolean(false)

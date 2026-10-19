@@ -167,7 +167,7 @@ private fun AppIdentity() {
     val context = LocalContext.current
     val info = remember(context) { runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull() }
     val version = if (info != null) {
-        stringResource(R.string.about_version, info.versionName.orEmpty(), info.longVersionCode.toInt())
+        stringResource(R.string.about_version, info.versionName.orEmpty())
     } else {
         stringResource(R.string.about_version_unknown)
     }

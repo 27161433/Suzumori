@@ -119,11 +119,11 @@
     <string name="yesterday">Yesterday</string>
     <string name="date_month_day_pattern">MMM d</string>
     <string name="date_short_pattern">M/d</string>
-    <string name="duration_seconds">%d s</string>
-    <string name="duration_minutes">%d min</string>
-    <string name="duration_hours">%d h</string>
-    <string name="duration_hours_minutes">%1$d h %2$d min</string>
-    <string name="duration_days">%d d</string>
+    <string name="duration_seconds">%s s</string>
+    <string name="duration_minutes">%s min</string>
+    <string name="duration_hours">%s h</string>
+    <string name="duration_hours_minutes">%1$s h %2$s min</string>
+    <string name="duration_days">%s d</string>
 
     <!-- Exported event log -->
     <string name="export_subject">Suzumori event log</string>
@@ -165,7 +165,7 @@
     <string name="cleanup_footnote">Clean up before uninstalling. Once uninstalled, the app can\'t clean up, and its game allowlist entries stay in effect.</string>
 
     <!-- About -->
-    <string name="about_version">Version %1$s (%2$d)</string>
+    <string name="about_version">Version %s</string>
     <string name="about_version_unknown">Version unknown</string>
     <string name="about_write_permission">Write permission</string>
     <string name="about_write_permission_hint">Tap to turn on</string>
@@ -224,9 +224,9 @@
     <string name="log_no_baseline">No baseline; this app never wrote to the game allowlist</string>
     <string name="log_nothing_owned">The list has no entries added by this app</string>
     <string name="log_no_write_permission">No “Modify system settings” permission; can\'t write</string>
-    <string name="log_retry">%1$s (retry %2$d)</string>
+    <string name="log_retry">%1$s (retry %2$s)</string>
     <!-- 上限固定是每分鐘 10 次，截斷時原本至少 120 字，數字一定大於 1，不需要單複數。 -->
-    <string name="log_rate_limited" tools:ignore="PluralsCandidate">More than %1$d patches per minute; paused for %2$d min</string>
+    <string name="log_rate_limited" tools:ignore="PluralsCandidate">More than %1$s patches per minute; paused for %2$s min</string>
     <string name="log_exception">Exception: %s</string>
     <string name="log_success">Success</string>
     <string name="log_verify_failed">Verification failed</string>
@@ -241,7 +241,7 @@
     <string name="log_unfreeze_summary">Sent unfreeze and reconnect</string>
     <string name="log_sent">%s: sent</string>
     <string name="log_send_exception">%1$s: exception %2$s</string>
-    <string name="log_truncated" tools:ignore="PluralsCandidate">… (%d chars)</string>
+    <string name="log_truncated" tools:ignore="PluralsCandidate">… (%s chars)</string>
 
     <!-- Self-monitor -->
     <string name="self_exit_action">Process was killed (%s)</string>
@@ -253,8 +253,8 @@
     <string name="self_start_unknown">Unknown start reason</string>
     <string name="self_since_last_exit">%1$s · %2$s after the last kill</string>
     <string name="self_paused_action">This app was paused</string>
-    <string name="self_paused_result">About %d s (the CPU was awake, but this app didn\'t run)</string>
-    <string name="self_paused_summary">Paused for about %d s</string>
+    <string name="self_paused_result">About %s s (the CPU was awake, but this app didn\'t run)</string>
+    <string name="self_paused_summary">Paused for about %s s</string>
     <string name="start_service">The system restarted the background service</string>
     <string name="start_boot">Started after boot</string>
     <string name="start_package_replaced">Restarted after an app update</string>
@@ -267,7 +267,7 @@
     <string name="start_launcher">Opened from the launcher</string>
     <string name="start_recents">Opened from recents</string>
     <string name="start_activity">App screen opened</string>
-    <string name="start_other">Other reason (%d)</string>
+    <string name="start_other">Other reason (%s)</string>
     <string name="exit_self">Exited by itself</string>
     <string name="exit_signaled">Killed by a signal (often the system or battery saver)</string>
     <string name="exit_low_memory">Low memory</string>
@@ -284,7 +284,7 @@
     <string name="exit_freezer">Killed while frozen</string>
     <string name="exit_package_state_change">App state changed</string>
     <string name="exit_package_updated">App updated</string>
-    <string name="exit_unknown">Unknown reason (%d)</string>
+    <string name="exit_unknown">Unknown reason (%s)</string>
     <string name="exit_force_stopped_by">Force-stopped by %s</string>
     <string name="clean_swipe_up">Swiped away from recents</string>
     <string name="clean_one_key">Cleared from recents</string>

@@ -21,7 +21,7 @@ import java.io.File
 object LogExporter {
     private const val DIRECTORY = "exports"
 
-    /** 匯出用的純文字。[entries] 舊到新，輸出也是舊到新，方便從頭閱讀一整晚的變化。 */
+    /** 匯出用的純文字，以目前的 App 語言組成。[entries] 舊到新，輸出也是舊到新，方便從頭閱讀一整晚的變化。 */
     fun format(context: Context, entries: List<EventEntry>): String = buildString {
         appendLine(context.getString(R.string.export_header, EventLogText.formatTime(System.currentTimeMillis())))
         appendLine(context.resources.getQuantityString(R.plurals.export_count, entries.size, entries.size))
@@ -29,10 +29,10 @@ object LogExporter {
         for (entry in entries) {
             val trigger = Labels.trigger(context, entry.trigger)
             appendLine("${EventLogText.formatTime(entry.timeMillis)} [$trigger]${entry.key?.let { " $it" }.orEmpty()}")
-            appendLine("  " + context.getString(R.string.export_action, entry.action))
-            appendLine("  " + context.getString(R.string.export_result, entry.result))
-            entry.before?.let { appendLine("  " + context.getString(R.string.export_before, it)) }
-            entry.after?.let { appendLine("  " + context.getString(R.string.export_after, it)) }
+            appendLine("  " + context.getString(R.string.export_action, LogTexts.render(context, entry.action)))
+            appendLine("  " + context.getString(R.string.export_result, LogTexts.render(context, entry.result)))
+            entry.before?.let { appendLine("  " + context.getString(R.string.export_before, LogTexts.value(context, it))) }
+            entry.after?.let { appendLine("  " + context.getString(R.string.export_after, LogTexts.value(context, it))) }
         }
     }
 

@@ -1,12 +1,13 @@
 package com.nakisuzu.suzumori.core.guard
 
+import com.nakisuzu.suzumori.core.log.LogText
 import kotlinx.coroutines.flow.Flow
 
 /** 一次修補或解凍的摘要，顯示在狀態頁與通知。 */
 data class ActionRecord(
     val atMillis: Long,
     val trigger: Trigger,
-    val summary: String,
+    val summary: LogText,
 )
 
 /** 跨程序重啟需要保存的守護狀態。 */
