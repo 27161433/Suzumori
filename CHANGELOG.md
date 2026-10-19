@@ -4,6 +4,18 @@
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-10-19
+
+### 修正
+
+- 切換語言時整個畫面不再閃一下（包括打開 App 後的第一次切換）。
+- 切換語言後，事件紀錄的日期、首頁的「今天／昨天」與關於頁的系統版本格式會立即換成新的語言。
+
+### Fixed
+
+- Switching the language no longer makes the whole screen flash, including the first switch after opening the app.
+- After switching the language, event log dates, "Today/Yesterday" on the home page and the system version format on the About page update right away.
+
 ## [1.0.0] - 2026-10-19
 
 第一個公開版本。First public release.
@@ -32,4 +44,5 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 - Persistent notification styles: default, pinned (top or bottom), or foldable.
 - Pre-uninstall cleanup that removes only the game allowlist entries Suzumori added.
 
+[1.0.1]: https://github.com/27161433/Suzumori/releases/tag/v1.0.1
 [1.0.0]: https://github.com/27161433/Suzumori/releases/tag/v1.0.0
