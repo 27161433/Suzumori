@@ -35,6 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +44,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -589,6 +591,8 @@ private fun RecentTile(state: MainUiState, onClick: () -> Unit, modifier: Modifi
 private fun RecentLine(label: String, millis: Long?) {
     val colors = SuzumoriTheme.colors
     val context = LocalContext.current
+    val locales = LocalConfiguration.current.locales
+    val day = remember(millis, locales) { millis?.let { TimeText.shortDay(context, it) } }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = label, fontSize = 12.sp, color = colors.onSurfaceMuted)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -599,8 +603,8 @@ private fun RecentLine(label: String, millis: Long?) {
                 color = if (millis == null) colors.onSurfaceMuted else colors.onSurface,
                 style = TextStyle(fontFeatureSettings = "tnum"),
             )
-            if (millis != null) {
-                Text(text = TimeText.shortDay(context, millis), fontSize = 11.sp, color = colors.onSurfaceMuted)
+            if (day != null) {
+                Text(text = day, fontSize = 11.sp, color = colors.onSurfaceMuted)
             }
         }
     }

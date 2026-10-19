@@ -48,11 +48,11 @@
             android:name="android.max_aspect"
             android:value="3.0" />
 
-        <!-- 深淺色切換不重建頁面，由 Compose 漸變配色（見 MainActivity.onConfigurationChanged）。
-             切換語言時照常重建，讓所有文字換成新的語言。 -->
+        <!-- 深淺色與語言切換都不重建頁面：重建會讓整個畫面閃一下。
+             Compose 會依新的設定重新組成，深淺色漸變配色、文字直接換成新的語言（見 MainActivity.onConfigurationChanged）。 -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="uiMode"
+            android:configChanges="uiMode|locale|layoutDirection"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

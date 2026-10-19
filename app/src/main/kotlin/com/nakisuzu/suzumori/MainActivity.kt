@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // 深淺色切換不重建 Activity（manifest 宣告 configChanges="uiMode"），由 Compose 漸變配色；
+    // 深淺色與語言切換不重建 Activity（見 manifest 的 configChanges），由 Compose 依新的設定重新組成；
     // 狀態列圖示的深淺要在這裡重新套用。
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)

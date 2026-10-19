@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -77,7 +78,9 @@ fun EventLogScreen(state: EventLogUiState, viewModel: EventLogViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val colors = SuzumoriTheme.colors
-    val rows = remember(state.events, context) { buildRows(context, state.events) }
+    // 切換語言時畫面不重建，以目前的語言當 key，日期標題才會換成新的語言。
+    val locales = LocalConfiguration.current.locales
+    val rows = remember(state.events, locales) { buildRows(context, state.events) }
     // 進頁時前幾筆依序浮現；之後捲進畫面或新增的紀錄直接顯示。
     var introDone by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -213,10 +216,11 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val hasValues = entry.before != null || entry.after != null
     val tone = levelColor(entry.level)
-    // 紀錄存的是與語言無關的代碼，顯示時才組成目前語言的句子。
-    val action = remember(entry, context) { LogTexts.render(context, entry.action) }
-    val result = remember(entry, context) { LogTexts.render(context, entry.result) }
-    val trigger = remember(entry.trigger, context) { Labels.trigger(context, entry.trigger) }
+    // 紀錄存的是與語言無關的代碼，顯示時才組成目前語言的句子；切換語言時跟著重新組成。
+    val locales = LocalConfiguration.current.locales
+    val action = remember(entry, locales) { LogTexts.render(context, entry.action) }
+    val result = remember(entry, locales) { LogTexts.render(context, entry.result) }
+    val trigger = remember(entry.trigger, locales) { Labels.trigger(context, entry.trigger) }
     val rail = colors.divider
     val chevron by animateFloatAsState(if (expanded) 180f else 0f, tween(350, easing = Motion.Emphasized), label = "chevron")
 

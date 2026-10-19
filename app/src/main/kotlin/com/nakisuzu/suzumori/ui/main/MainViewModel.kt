@@ -64,10 +64,7 @@ class MainViewModel(
 
         viewModelScope.launch {
             val device = DeviceInfoReader.read(app)
-            val version = device.hyperOsVersion?.let { name ->
-                device.hyperOsIncremental?.let { app.getString(R.string.system_version_format, name, it) } ?: name
-            }
-            local.update { it.copy(systemVersion = version) }
+            local.update { it.copy(systemVersion = device.hyperOsVersion, systemBuild = device.hyperOsIncremental) }
         }
         // 開啟 App 時依設定啟動服務與排程，並執行一次檢查。
         viewModelScope.launch {

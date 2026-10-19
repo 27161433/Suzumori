@@ -18,8 +18,10 @@ data class MainUiState(
     val selfNoRestrict: Boolean = false,
     /** 小米的「自啟動」已開啟；不是小米系統或讀不到時為 null。 */
     val selfAutoStart: Boolean? = null,
-    /** `ro.mi.os.version.name` 與組建版本；讀不到時為 null。 */
+    /** `ro.mi.os.version.name`；讀不到時為 null。 */
     val systemVersion: String? = null,
+    /** HyperOS 的組建版本（incremental）；讀不到時為 null。和版本名稱分開存，顯示時才依語言組合。 */
+    val systemBuild: String? = null,
     val config: GuardConfig = GuardConfig(),
     val lastPatch: ActionRecord? = null,
     val lastUnfreeze: ActionRecord? = null,

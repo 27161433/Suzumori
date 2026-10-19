@@ -136,7 +136,11 @@ fun AboutScreen(state: MainUiState, openPage: ((Context) -> String?) -> Unit) {
                             showDivider = false,
                         ) {
                             Text(
-                                text = state.systemVersion ?: stringResource(R.string.unknown),
+                                text = when {
+                                    state.systemVersion == null -> stringResource(R.string.unknown)
+                                    state.systemBuild == null -> state.systemVersion
+                                    else -> stringResource(R.string.system_version_format, state.systemVersion, state.systemBuild)
+                                },
                                 modifier = Modifier.widthIn(max = 180.dp),
                                 fontSize = 13.sp,
                                 textAlign = TextAlign.End,
