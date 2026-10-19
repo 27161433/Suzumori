@@ -34,11 +34,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nakisuzu.suzumori.R
+import com.nakisuzu.suzumori.platform.AppLanguage
 import com.nakisuzu.suzumori.platform.NotificationPosition
 import com.nakisuzu.suzumori.platform.NotificationStyle
 import com.nakisuzu.suzumori.platform.ThemeMode
@@ -73,32 +76,57 @@ fun SettingsScreen(
     val config = state.config
 
     SuzumoriPage {
-        item(key = "title") { PageTitle("設定") }
+        item(key = "title") { PageTitle(stringResource(R.string.tab_settings)) }
         item(key = "appearance") {
             Entrance(index = 1, play = true) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SectionTitle("外觀")
+                    SectionTitle(stringResource(R.string.settings_appearance))
                     Panel(
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(18.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        Text(text = "App 主題", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.onSurface)
+                        Text(
+                            text = stringResource(R.string.settings_language),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.onSurface,
+                        )
+                        SegmentedSelector(
+                            options = AppLanguage.entries,
+                            selected = state.language,
+                            label = { it.label() },
+                            onSelect = viewModel::setLanguage,
+                        )
+                        Divider()
+                        Text(
+                            text = stringResource(R.string.settings_theme),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.onSurface,
+                        )
                         SegmentedSelector(
                             options = ThemeMode.entries,
                             selected = state.themeMode,
-                            label = { it.label },
+                            label = { it.label() },
                             onSelect = viewModel::setThemeMode,
                         )
                         Divider()
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(text = "常駐通知", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.onSurface)
+                            Text(
+                                text = stringResource(R.string.persistent_notification),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.onSurface,
+                            )
                             AnimatedText(
-                                text = when (state.notificationStyle) {
-                                    NotificationStyle.SYSTEM -> "系統標準樣式，位置由系統決定，內容更新時可能跳到最上方。"
-                                    NotificationStyle.POSITIONED -> "系統標準樣式，固定在通知欄最上方，或排在其他較新的通知下方。"
-                                    NotificationStyle.FOLDABLE -> "長按通知可以收納到「更多通知」。"
-                                },
+                                text = stringResource(
+                                    when (state.notificationStyle) {
+                                        NotificationStyle.SYSTEM -> R.string.notification_style_system_desc
+                                        NotificationStyle.POSITIONED -> R.string.notification_style_positioned_desc
+                                        NotificationStyle.FOLDABLE -> R.string.notification_style_foldable_desc
+                                    },
+                                ),
                                 color = colors.onSurfaceMuted,
                                 fontSize = 12,
                                 lineHeight = 20,
@@ -107,7 +135,7 @@ fun SettingsScreen(
                         SegmentedSelector(
                             options = NotificationStyle.entries,
                             selected = state.notificationStyle,
-                            label = { it.label },
+                            label = { it.label() },
                             onSelect = viewModel::setNotificationStyle,
                         )
                         AnimatedVisibility(
@@ -118,7 +146,7 @@ fun SettingsScreen(
                             SegmentedSelector(
                                 options = NotificationPosition.entries,
                                 selected = state.notificationPosition,
-                                label = { it.label },
+                                label = { it.label() },
                                 onSelect = viewModel::setNotificationPosition,
                             )
                         }
@@ -129,12 +157,12 @@ fun SettingsScreen(
         item(key = "guard") {
             Entrance(index = 2, play = true) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SectionTitle("守護")
+                    SectionTitle(stringResource(R.string.settings_guard))
                     Panel(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 18.dp, vertical = 4.dp)) {
                         // 自動守護的總開關在首頁。
                         SwitchRow(
-                            title = "夜間守護",
-                            summary = "把 GMS 加入遊戲白名單，避免夜間被凍結",
+                            title = stringResource(R.string.night_guard),
+                            summary = stringResource(R.string.night_guard_summary),
                             checked = config.nightProtection,
                             enabled = true,
                             locked = state.busy,
@@ -142,8 +170,8 @@ fun SettingsScreen(
                             showDivider = true,
                         )
                         SwitchRow(
-                            title = "本 App 也加入遊戲白名單",
-                            summary = "把自己加入遊戲白名單",
+                            title = stringResource(R.string.self_in_game_allowlist),
+                            summary = stringResource(R.string.self_in_game_allowlist_summary),
                             checked = config.selfInGameAllowlist,
                             enabled = config.nightProtection,
                             locked = state.busy,
@@ -151,8 +179,8 @@ fun SettingsScreen(
                             showDivider = true,
                         )
                         SwitchRow(
-                            title = "常駐通知",
-                            summary = "以前景服務常駐，即時監聽名單變化。關閉後在背景的反應可能會明顯變慢。",
+                            title = stringResource(R.string.persistent_notification),
+                            summary = stringResource(R.string.persistent_notification_summary),
                             checked = config.persistentNotification,
                             enabled = config.autoGuard,
                             locked = state.busy,
@@ -175,7 +203,7 @@ fun SettingsScreen(
 private fun CleanupSection(cleaning: Boolean, enabled: Boolean, onCleanup: () -> Unit) {
     val colors = SuzumoriTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionTitle("解除安裝")
+        SectionTitle(stringResource(R.string.settings_uninstall))
         Panel(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 18.dp),
@@ -198,13 +226,13 @@ private fun CleanupSection(cleaning: Boolean, enabled: Boolean, onCleanup: () ->
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     AnimatedText(
-                        text = if (cleaning) "清理中…" else "解除安裝前清理",
+                        text = stringResource(if (cleaning) R.string.cleanup_running else R.string.cleanup_title),
                         color = colors.warn,
                         fontSize = 15,
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = "只移除本 App 加入遊戲白名單的項目，並停止自動守護",
+                        text = stringResource(R.string.cleanup_summary),
                         fontSize = 12.sp,
                         lineHeight = 17.sp,
                         color = colors.onSurfaceMuted,
@@ -213,13 +241,50 @@ private fun CleanupSection(cleaning: Boolean, enabled: Boolean, onCleanup: () ->
                 Chevron()
             }
         }
-        Footnote("解除安裝前請先清理。解除安裝後 App 就沒有機會再執行清理，留在遊戲白名單中的項目會一直生效。")
+        Footnote(stringResource(R.string.cleanup_footnote))
     }
 }
 
+/** 語言選項以該語言本身的名稱顯示，切換前後都看得懂。 */
+@Composable
+private fun AppLanguage.label(): String = stringResource(
+    when (this) {
+        AppLanguage.SYSTEM -> R.string.follow_system
+        AppLanguage.TRADITIONAL_CHINESE -> R.string.language_traditional_chinese
+        AppLanguage.SIMPLIFIED_CHINESE -> R.string.language_simplified_chinese
+        AppLanguage.ENGLISH -> R.string.language_english
+    },
+)
+
+@Composable
+private fun ThemeMode.label(): String = stringResource(
+    when (this) {
+        ThemeMode.SYSTEM -> R.string.follow_system
+        ThemeMode.LIGHT -> R.string.theme_light
+        ThemeMode.DARK -> R.string.theme_dark
+    },
+)
+
+@Composable
+private fun NotificationStyle.label(): String = stringResource(
+    when (this) {
+        NotificationStyle.SYSTEM -> R.string.notification_style_system
+        NotificationStyle.POSITIONED -> R.string.notification_style_positioned
+        NotificationStyle.FOLDABLE -> R.string.notification_style_foldable
+    },
+)
+
+@Composable
+private fun NotificationPosition.label(): String = stringResource(
+    when (this) {
+        NotificationPosition.TOP -> R.string.notification_position_top
+        NotificationPosition.BOTTOM -> R.string.notification_position_bottom
+    },
+)
+
 /** 分段選擇器，選中的底色滑到點選的位置。 */
 @Composable
-private fun <T> SegmentedSelector(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
+private fun <T> SegmentedSelector(options: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit) {
     val colors = SuzumoriTheme.colors
     BoxWithConstraints(
         modifier = Modifier
@@ -263,11 +328,13 @@ private fun <T> SegmentedSelector(options: List<T>, selected: T, label: (T) -> S
                         .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(mode) }),
                     contentAlignment = Alignment.Center,
                 ) {
+                    // 四個選項時（語言）字稍微縮小，避免較長的名稱被截斷。
                     Text(
                         text = label(mode),
-                        fontSize = 14.sp,
+                        fontSize = if (options.size > 3) 13.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                         color = textColor,
+                        maxLines = 1,
                     )
                 }
             }

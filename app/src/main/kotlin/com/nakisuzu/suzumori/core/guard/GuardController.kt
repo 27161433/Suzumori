@@ -8,6 +8,7 @@ import com.nakisuzu.suzumori.core.config.GuardConfig
 import com.nakisuzu.suzumori.core.list.GameAllowlist
 import com.nakisuzu.suzumori.core.list.MilletList
 import com.nakisuzu.suzumori.core.log.EventEntry
+import com.nakisuzu.suzumori.core.log.EventLevel
 import com.nakisuzu.suzumori.core.log.EventLog
 import com.nakisuzu.suzumori.core.log.truncateForLog
 import com.nakisuzu.suzumori.core.settings.SettingKeys
@@ -34,6 +35,7 @@ class GuardController(
     private val states: GuardStateStore,
     private val bootCounter: BootCounter,
     private val log: EventLog,
+    private val text: GuardText,
     private val selfPackage: String,
     private val clock: () -> Long = System::currentTimeMillis,
     private val policy: GuardPolicy = GuardPolicy(),
@@ -75,7 +77,7 @@ class GuardController(
         val firstSinceBoot = bootCount != null && state.lastEnsuredBootCount != bootCount
 
         if (rateLimiter.isPaused(clock())) {
-            record(trigger, null, null, null, "略過修補", "修補次數超過上限，暫停中")
+            record(trigger, null, null, null, text.skipPatch, text.pausedByRateLimit, EventLevel.WARNING)
             if (forceUnfreeze) unfreezeLocked(trigger)
             return EnsureResult(patched = false, failed = false, unfroze = forceUnfreeze, paused = true)
         }
@@ -98,7 +100,7 @@ class GuardController(
         }
 
         if (patches.isNotEmpty()) {
-            states.update { it.copy(lastPatch = ActionRecord(clock(), trigger, patches.joinToString("；"))) }
+            states.update { it.copy(lastPatch = ActionRecord(clock(), trigger, text.clauses(patches))) }
         }
         val unfreeze = patches.isNotEmpty() || firstSinceBoot || forceUnfreeze
         if (unfreeze) unfreezeLocked(trigger)
@@ -124,18 +126,18 @@ class GuardController(
         val current = observe(trigger, key)
         val missing = required.filterNot { MilletList.contains(current, it) }
         if (missing.isEmpty()) return PatchOutcome.ALREADY_OK to ""
-        val names = missing.joinToString("、") { displayName(it) }
+        val names = text.list(missing.map(::displayName))
         val outcome = patch(
             trigger = trigger,
             key = key,
-            action = "追加 $names",
+            action = text.append(names),
             compute = { latest ->
                 val stillMissing = required.filterNot { MilletList.contains(latest, it) }
                 if (stillMissing.isEmpty()) null else stillMissing.fold(latest) { acc, pkg -> MilletList.add(acc, pkg) }
             },
             verify = { readBack, _ -> required.all { MilletList.contains(readBack, it) } },
         )
-        return outcome to "MILLET 補回 $names"
+        return outcome to text.milletRestored(names)
     }
 
     /**
@@ -171,7 +173,8 @@ class GuardController(
         )
 
         val reloadOnly = missing.isEmpty()
-        val action = if (reloadOnly) "結尾底線切換（開機後重新載入）" else "追加 ${missing.joinToString("、") { displayName(it) }}"
+        val names = text.list(missing.map(::displayName))
+        val action = if (reloadOnly) text.toggleSeparator else text.append(names)
         val outcome = patch(
             trigger = trigger,
             key = key,
@@ -191,7 +194,7 @@ class GuardController(
         if (outcome == PatchOutcome.WRITTEN && bootCount != null) {
             states.update { it.copy(lastReloadedBootCount = bootCount) }
         }
-        val summary = if (reloadOnly) "遊戲白名單重新載入" else "遊戲白名單補回 ${missing.joinToString("、") { displayName(it) }}"
+        val summary = if (reloadOnly) text.gameAllowlistReloaded else text.gameAllowlistRestored(names)
         return outcome to summary
     }
 
@@ -200,7 +203,7 @@ class GuardController(
         val current = observe(trigger, key)
         val baseline = baselines.get()
         if (baseline == null) {
-            record(trigger, key, null, null, "清理遊戲白名單", "沒有基準紀錄，本 App 沒有寫入過遊戲白名單")
+            record(trigger, key, null, null, text.cleanupGameAllowlist, text.noBaseline)
             return CleanupResult.NOTHING_TO_DO
         }
 
@@ -211,14 +214,14 @@ class GuardController(
         val present = owned.filterTo(mutableSetOf()) { GameAllowlist.contains(current, it) }
         if (present.isEmpty()) {
             if (clearBaseline) baselines.clear()
-            record(trigger, key, null, null, "清理遊戲白名單", "名單中沒有本 App 加入的項目")
+            record(trigger, key, null, null, text.cleanupGameAllowlist, text.nothingOwned)
             return CleanupResult.NOTHING_TO_DO
         }
 
         val outcome = patch(
             trigger = trigger,
             key = key,
-            action = "移除 ${present.joinToString("、") { displayName(it) }}",
+            action = text.remove(text.list(present.map(::displayName))),
             compute = { latest ->
                 val toRemove = present.filterTo(mutableSetOf()) { GameAllowlist.contains(latest, it) }
                 // 沒有剩下任何項目時是空字串；不刪除 key，否則系統不會清除快取。
@@ -251,18 +254,19 @@ class GuardController(
         rateLimited: Boolean = true,
     ): PatchOutcome {
         if (!settings.canWrite()) {
-            record(trigger, key, null, null, action, "沒有「修改系統設定」權限，無法寫入")
+            record(trigger, key, null, null, action, text.noWritePermission, EventLevel.WARNING)
             return PatchOutcome.FAILED
         }
         for (attempt in 0..policy.maxRetries) {
             if (attempt > 0) delay(policy.backoffBeforeRetry(attempt))
             val latest = settings.read(key)
             val target = compute(latest) ?: return PatchOutcome.ALREADY_OK
-            val label = if (attempt == 0) action else "$action（第 $attempt 次重試）"
+            val label = if (attempt == 0) action else text.retry(action, attempt)
             if (rateLimited && !rateLimiter.tryAcquire(clock())) {
                 record(
                     trigger, key, latest, null, label,
-                    "每分鐘修補超過 ${policy.maxWritesPerMinute} 次，暫停 ${policy.pauseMillis / 60_000} 分鐘",
+                    text.rateLimited(policy.maxWritesPerMinute, policy.pauseMillis / 60_000),
+                    EventLevel.WARNING,
                 )
                 return PatchOutcome.RATE_LIMITED
             }
@@ -277,14 +281,11 @@ class GuardController(
             val readBack = settings.read(key)
             lastSeen[key] = readBack
             val ok = error == null && verify(readBack, target)
-            record(
-                trigger, key, latest, readBack, label,
-                when {
-                    error != null -> "例外：$error"
-                    ok -> "成功"
-                    else -> "驗證失敗"
-                },
-            )
+            when {
+                error != null -> record(trigger, key, latest, readBack, label, text.exception(error), EventLevel.WARNING)
+                ok -> record(trigger, key, latest, readBack, label, text.success, EventLevel.SUCCESS)
+                else -> record(trigger, key, latest, readBack, label, text.verifyFailed, EventLevel.WARNING)
+            }
             if (ok) return PatchOutcome.WRITTEN
         }
         return PatchOutcome.FAILED
@@ -296,7 +297,7 @@ class GuardController(
         if (lastSeen.containsKey(key)) {
             val previous = lastSeen[key]
             if (previous != current) {
-                record(trigger, key, previous, current, "偵測到外部變更（${diff(key, previous, current)}）", membership(key, current))
+                record(trigger, key, previous, current, text.externalChange(diff(key, previous, current)), membership(key, current))
             }
         }
         lastSeen[key] = current
@@ -304,22 +305,31 @@ class GuardController(
     }
 
     private suspend fun unfreezeLocked(trigger: Trigger) {
-        record(trigger, null, null, null, "送出解凍廣播", summarize(signals.sendUnfreeze()))
+        recordSignals(trigger, text.sendUnfreeze, signals.sendUnfreeze())
         delay(policy.reconnectDelayMillis)
-        record(trigger, null, null, null, "送出重連廣播", summarize(signals.sendReconnect()))
-        states.update { it.copy(lastUnfreeze = ActionRecord(clock(), trigger, "已送出解凍與重連")) }
+        recordSignals(trigger, text.sendReconnect, signals.sendReconnect())
+        states.update { it.copy(lastUnfreeze = ActionRecord(clock(), trigger, text.unfreezeSummary)) }
     }
 
     /** 寫入事件紀錄。紀錄失敗（例如儲存空間錯誤）不應該中斷守護，所以吞掉例外。 */
-    private suspend fun record(trigger: Trigger, key: String?, before: String?, after: String?, action: String, result: String) {
+    private suspend fun record(
+        trigger: Trigger,
+        key: String?,
+        before: String?,
+        after: String?,
+        action: String,
+        result: String,
+        level: EventLevel = EventLevel.INFO,
+    ) {
         val entry = EventEntry(
             timeMillis = clock(),
-            trigger = trigger.label,
+            trigger = trigger.name,
             key = key,
-            before = truncateForLog(before),
-            after = truncateForLog(after),
+            before = truncateForLog(before, text::truncated),
+            after = truncateForLog(after, text::truncated),
             action = action,
             result = result,
+            level = level,
         )
         try {
             log.append(entry)
@@ -337,11 +347,13 @@ class GuardController(
         val new = entries(key, after).toSet()
         val added = new - old
         val removed = old - new
-        if (added.isEmpty() && removed.isEmpty()) return "成員不變"
-        return buildList {
-            if (removed.isNotEmpty()) add("移除 ${removed.joinToString("、")}")
-            if (added.isNotEmpty()) add("新增 ${added.joinToString("、")}")
-        }.joinToString("；")
+        if (added.isEmpty() && removed.isEmpty()) return text.membersUnchanged
+        return text.clauses(
+            buildList {
+                if (removed.isNotEmpty()) add(text.removedMembers(text.list(removed)))
+                if (added.isNotEmpty()) add(text.addedMembers(text.list(added)))
+            },
+        )
     }
 
     private fun membership(key: String, value: String?): String {
@@ -350,17 +362,20 @@ class GuardController(
         } else {
             GameAllowlist.contains(value, Packages.GMS)
         }
-        return if (gms) "GMS 在名單中" else "GMS 不在名單中"
+        return text.gmsInList(gms)
     }
 
     private fun displayName(pkg: String): String = when (pkg) {
         Packages.GMS -> "GMS"
-        selfPackage -> "本 App"
+        selfPackage -> text.selfApp
         else -> pkg
     }
 
-    private fun summarize(results: List<SendResult>): String =
-        results.joinToString("；") { "${it.label}：${it.error?.let { e -> "例外 $e" } ?: "已送出"}" }
+    /** 一組廣播的結果記成一筆；有任何一則拋出例外時標為警告。 */
+    private suspend fun recordSignals(trigger: Trigger, action: String, results: List<SendResult>) {
+        val level = if (results.any { it.error != null }) EventLevel.WARNING else EventLevel.INFO
+        record(trigger, null, null, null, action, text.clauses(results.map { text.sendResult(it.label, it.error) }), level)
+    }
 }
 
 enum class PatchOutcome { ALREADY_OK, WRITTEN, FAILED, RATE_LIMITED }

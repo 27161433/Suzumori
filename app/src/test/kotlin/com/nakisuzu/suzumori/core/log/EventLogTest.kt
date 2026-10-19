@@ -16,12 +16,13 @@ class EventLogTest {
 
     private fun entry(time: Long, result: String = "成功") = EventEntry(
         timeMillis = time,
-        trigger = "MILLET 名單變更",
+        trigger = "MILLET_CHANGED",
         key = "MILLET_NO_RESTRICT_APP",
         before = "com.a, com.b",
         after = "com.a, com.b,com.google.android.gms",
         action = "追加 GMS",
         result = result,
+        level = EventLevel.SUCCESS,
     )
 
     @Test
@@ -90,8 +91,32 @@ class EventLogTest {
 
     @Test
     fun `截斷過長的值並標示原本長度`() {
-        assertEquals("abc", truncateForLog("abc", limit = 5))
-        assertEquals("abcde…（共 7 字）", truncateForLog("abcdefg", limit = 5))
-        assertNull(truncateForLog(null))
+        val suffix = { total: Int -> "…（共 $total 字）" }
+        assertEquals("abc", truncateForLog("abc", suffix, limit = 5))
+        assertEquals("abcde…（共 7 字）", truncateForLog("abcdefg", suffix, limit = 5))
+        assertNull(truncateForLog(null, suffix))
+    }
+
+    @Test
+    fun `第 1 版的紀錄仍可讀取，觸發原因對回名稱，結果的性質從文字推斷`() {
+        val ok = EventLogCodec.decode("1\t5\tMILLET 名單變更\tMILLET_NO_RESTRICT_APP\t\\N\t\\N\t追加 GMS\t成功")
+        assertEquals("MILLET_CHANGED", ok?.trigger)
+        assertEquals(EventLevel.SUCCESS, ok?.level)
+
+        val failed = EventLogCodec.decode("1\t6\t開機（解鎖前）\t\\N\t\\N\t\\N\t追加 GMS\t驗證失敗")
+        assertEquals("LOCKED_BOOT", failed?.trigger)
+        assertEquals(EventLevel.WARNING, failed?.level)
+
+        val unknown = EventLogCodec.decode("1\t7\t未來的觸發\t\\N\t\\N\t\\N\t送出解凍廣播\tGCM_RECONNECT：已送出")
+        assertEquals("未來的觸發", unknown?.trigger)
+        assertEquals(EventLevel.INFO, unknown?.level)
+    }
+
+    @Test
+    fun `重新寫入時改用第 2 版`() {
+        val legacy = EventLogCodec.decode("1\t5\t自我監測\t\\N\t\\N\t\\N\t本 App 曾被暫停\t約 12 秒")!!
+        val encoded = EventLogCodec.encode(legacy)
+        assertTrue(encoded.startsWith("2\t5\tSELF_MONITOR\t"))
+        assertEquals(legacy, EventLogCodec.decode(encoded))
     }
 }

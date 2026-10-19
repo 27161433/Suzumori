@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.nakisuzu.suzumori.AppContainer
+import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.SuzumoriApp
 import com.nakisuzu.suzumori.core.Packages
 import com.nakisuzu.suzumori.core.guard.CleanupResult
@@ -63,7 +64,9 @@ class MainViewModel(
 
         viewModelScope.launch {
             val device = DeviceInfoReader.read(app)
-            val version = device.hyperOsVersion?.let { name -> device.hyperOsIncremental?.let { "$name（$it）" } ?: name }
+            val version = device.hyperOsVersion?.let { name ->
+                device.hyperOsIncremental?.let { app.getString(R.string.system_version_format, name, it) } ?: name
+            }
             local.update { it.copy(systemVersion = version) }
         }
         // 開啟 App 時依設定啟動服務與排程，並執行一次檢查。
@@ -93,16 +96,13 @@ class MainViewModel(
 
     fun checkNow() = runAction(BusyAction.CHECK) {
         val result = container.controller.ensure(Trigger.MANUAL_CHECK)
-        MainDialog.Message("檢查完成", describe(result))
+        MainDialog.Message(app.getString(R.string.check_done), app.getString(describe(result)))
     }
 
     fun unfreezeNow() = runAction(BusyAction.UNFREEZE) {
         val result = container.controller.ensureAndUnfreeze(Trigger.MANUAL_UNFREEZE)
-        val text = buildString {
-            if (result.patched) append("已先補回名單。")
-            append("已送出解凍與重連廣播。廣播無法確認對方是否收到，請開啟 FCM 診斷頁面確認連線狀態。")
-        }
-        MainDialog.Message("已送出", text)
+        val text = app.getString(if (result.patched) R.string.unfreeze_patched_sent_text else R.string.unfreeze_sent_text)
+        MainDialog.Message(app.getString(R.string.unfreeze_sent), text)
     }
 
     /** 首頁的自動守護開關。開關本身就是回饋，不顯示轉圈或對話框。 */
@@ -115,11 +115,13 @@ class MainViewModel(
     fun confirmCleanup() = runAction(BusyAction.CLEANUP) {
         dismissDialog()
         val result = container.actions.cleanupForUninstall()
-        val text = when (result) {
-            CleanupResult.REMOVED -> "已移除本 App 加入遊戲白名單的項目，並停止自動守護。現在可以解除安裝。"
-            CleanupResult.NOTHING_TO_DO -> "遊戲白名單中沒有本 App 加入的項目，已停止自動守護。現在可以解除安裝。"
-            CleanupResult.FAILED -> "清理失敗，詳見事件紀錄。請確認「修改系統設定」權限仍然開啟後再試一次。"
-        }
+        val text = app.getString(
+            when (result) {
+                CleanupResult.REMOVED -> R.string.cleanup_removed
+                CleanupResult.NOTHING_TO_DO -> R.string.cleanup_nothing
+                CleanupResult.FAILED -> R.string.cleanup_failed
+            },
+        )
         MainDialog.CleanupFinished(text, canUninstall = result != CleanupResult.FAILED)
     }
 
@@ -151,12 +153,12 @@ class MainViewModel(
         }
     }
 
-    private fun describe(result: EnsureResult): String = when {
-        result.paused -> "修補次數超過每分鐘上限，暫停中。可能有其他程式在反覆改寫名單，詳見事件紀錄。"
-        result.failed -> "有項目修補失敗，詳見事件紀錄。"
-        result.patched -> "已補回名單，並送出解凍與重連。"
-        result.unfroze -> "名單都正常。這是開機後的第一次檢查，已送出解凍與重連。"
-        else -> "名單都正常，不需要修補。"
+    private fun describe(result: EnsureResult): Int = when {
+        result.paused -> R.string.check_paused
+        result.failed -> R.string.check_failed
+        result.patched -> R.string.check_patched
+        result.unfroze -> R.string.check_first_boot
+        else -> R.string.check_ok
     }
 
     companion object {

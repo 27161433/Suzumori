@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 共用 -->
+    <string name="app_tagline">鈴守・守護 FCM 推播</string>
+    <string name="tile_unfreeze">解凍並重連</string>
+    <string name="tile_sending">傳送中…</string>
+    <string name="ok">確定</string>
+    <string name="cancel">取消</string>
+    <string name="later">稍後</string>
+    <string name="follow_system">跟隨系統</string>
+    <string name="unknown">未知</string>
+    <string name="none_yet">尚無</string>
+    <string name="cannot_open_page">無法開啟頁面</string>
+    <string name="system_version_format">%1$s（%2$s）</string>
+
+    <!-- 導覽列 -->
+    <string name="tab_home">首頁</string>
+    <string name="tab_log">事件紀錄</string>
+    <string name="tab_settings">設定</string>
+    <string name="tab_about">關於</string>
+
+    <!-- 首頁 -->
+    <string name="fcm_diagnostics">FCM 診斷頁面</string>
+    <string name="auto_guard">自動守護</string>
+    <string name="problem_write_permission">寫入權限未開啟</string>
+    <string name="problem_power_policy">省電策略未設為「無限制」</string>
+    <string name="problem_autostart">自啟動未開啟</string>
+    <string name="problem_millet">GMS 不在 MILLET 名單</string>
+    <string name="problem_game_allowlist">GMS 不在遊戲白名單</string>
+    <string name="hero_busy_check">正在檢查名單…</string>
+    <string name="hero_busy_unfreeze">正在送出解凍與重連…</string>
+    <string name="hero_busy_cleanup">正在清理…</string>
+    <string name="hero_loading">讀取中</string>
+    <string name="hero_attention">需要處理</string>
+    <plurals name="hero_problem_count">
+        <item quantity="other">%d 個問題讓守護失效</item>
+    </plurals>
+    <string name="hero_paused">已暫停</string>
+    <string name="hero_auto_guard_off">自動守護已關閉</string>
+    <string name="hero_paused_detail">名單被改寫時不會自動補回</string>
+    <string name="hero_guarding">守護中</string>
+    <string name="hero_night_active">夜間防線生效中</string>
+    <string name="hero_night_off">夜間守護已關閉</string>
+    <string name="hero_until_day">距白天防線 %s</string>
+    <string name="hero_day_active">白天防線生效中</string>
+    <string name="hero_until_night">距夜間防線 %s</string>
+    <string name="legend_day">白天 08:00–22:59</string>
+    <string name="legend_night">夜間 23:00–07:59</string>
+    <string name="attention_write_text">沒有「修改系統設定」權限就無法補回名單。開啟後回到 App 會自動重新檢查。</string>
+    <string name="attention_power_text">把「省電策略」設為「無限制」，否則 Suzumori 在背景會被凍結。</string>
+    <string name="attention_autostart_text">在應用管理開啟「自啟動」。沒有自啟動時，小米不會在開機時通知本 App，被結束後也可能無法自動重新啟動。</string>
+    <string name="go_turn_on">前往開啟</string>
+    <string name="go_settings">前往設定</string>
+    <string name="chip_gms_listed">GMS 已在名單</string>
+    <string name="chip_gms_missing">GMS 不在名單</string>
+    <string name="line_night_label">夜間防線・至 07:59</string>
+    <string name="line_day_label">白天防線・至 22:59</string>
+    <string name="line_game_allowlist">遊戲白名單</string>
+    <string name="line_millet">MILLET 名單</string>
+    <string name="line_active">生效中</string>
+    <string name="line_off">已關閉</string>
+    <string name="recent_patch">最近修補</string>
+    <string name="recent_unfreeze">最近解凍</string>
+    <string name="recent_health">運作狀況</string>
+    <string name="recent_normal">正常</string>
+    <string name="recent_killed_at">%s 曾被結束</string>
+    <string name="action_check">立即檢查並修補</string>
+    <string name="action_checking">檢查中…</string>
+    <string name="action_check_summary">名單正常時只讀取，不寫入也不送廣播</string>
+    <string name="action_unfreeze">立即解凍並重連</string>
+    <string name="action_sending">送出中…</string>
+    <string name="action_unfreeze_summary">先確保名單正常，再送出解凍與重連</string>
+    <string name="action_footnote">廣播送出後只能確認「已送出」，無法確認 GMS 有收到。是否真的連上，請點右上角開啟 FCM 診斷頁面確認。</string>
+
+    <!-- 首頁的對話框 -->
+    <string name="check_done">檢查完成</string>
+    <string name="check_paused">修補次數超過每分鐘上限，暫停中。可能有其他程式在反覆改寫名單，詳見事件紀錄。</string>
+    <string name="check_failed">有項目修補失敗，詳見事件紀錄。</string>
+    <string name="check_patched">已補回名單，並送出解凍與重連。</string>
+    <string name="check_first_boot">名單都正常。這是開機後的第一次檢查，已送出解凍與重連。</string>
+    <string name="check_ok">名單都正常，不需要修補。</string>
+    <string name="unfreeze_sent">已送出</string>
+    <string name="unfreeze_sent_text">已送出解凍與重連廣播。廣播無法確認對方是否收到，請開啟 FCM 診斷頁面確認連線狀態。</string>
+    <string name="unfreeze_patched_sent_text">已先補回名單。已送出解凍與重連廣播。廣播無法確認對方是否收到，請開啟 FCM 診斷頁面確認連線狀態。</string>
+    <string name="cleanup_title">解除安裝前清理</string>
+    <string name="cleanup_confirm_text">會停止自動守護與夜間守護，並從遊戲白名單移除本 App 當初加入的項目（其他程式的項目會保留）。MILLET 名單不需要清理，PowerKeeper 下次重建時會自然移除 GMS。</string>
+    <string name="cleanup_confirm">清理</string>
+    <string name="cleanup_done">清理完成</string>
+    <string name="cleanup_go_uninstall">前往解除安裝</string>
+    <string name="cleanup_removed">已移除本 App 加入遊戲白名單的項目，並停止自動守護。現在可以解除安裝。</string>
+    <string name="cleanup_nothing">遊戲白名單中沒有本 App 加入的項目，已停止自動守護。現在可以解除安裝。</string>
+    <string name="cleanup_failed">清理失敗，詳見事件紀錄。請確認「修改系統設定」權限仍然開啟後再試一次。</string>
+
+    <!-- 事件紀錄頁 -->
+    <string name="log_export">匯出</string>
+    <string name="log_clear">清除</string>
+    <string name="log_export_failed">無法匯出</string>
+    <plurals name="log_count">
+        <item quantity="other">最近 %d 筆・最多保留 2000 筆</item>
+    </plurals>
+    <string name="log_hint">記錄每次偵測到的名單改寫、修補與廣播，用來觀察 PowerKeeper 與 Joyose 改寫名單的頻率和時間點。</string>
+    <string name="log_empty">尚無紀錄</string>
+    <string name="log_before">修改前</string>
+    <string name="log_after">修改後</string>
+    <string name="log_collapse">收合</string>
+    <string name="log_show_values">顯示修改前後的值</string>
+    <string name="log_clear_title">清除事件紀錄</string>
+    <string name="log_clear_text">清除後無法復原。如果還要觀察名單的變化，建議先匯出。</string>
+    <string name="today">今天</string>
+    <string name="yesterday">昨天</string>
+    <string name="date_month_day_pattern">M 月 d 日</string>
+    <string name="date_short_pattern">M/d</string>
+    <string name="duration_seconds">%d 秒</string>
+    <string name="duration_minutes">%d 分</string>
+    <string name="duration_hours">%d 小時</string>
+    <string name="duration_hours_minutes">%1$d 小時 %2$d 分</string>
+    <string name="duration_days">%d 天</string>
+
+    <!-- 匯出的事件紀錄 -->
+    <string name="export_subject">Suzumori 事件紀錄</string>
+    <string name="export_chooser">匯出事件紀錄</string>
+    <string name="export_header">Suzumori 事件紀錄（匯出時間 %s）</string>
+    <plurals name="export_count">
+        <item quantity="other">共 %d 筆</item>
+    </plurals>
+    <string name="export_action">動作：%s</string>
+    <string name="export_result">結果：%s</string>
+    <string name="export_before">修改前：\"%s\"</string>
+    <string name="export_after">修改後：\"%s\"</string>
+
+    <!-- 設定頁 -->
+    <string name="settings_appearance">外觀</string>
+    <string name="settings_language">語言</string>
+    <string name="settings_theme">App 主題</string>
+    <string name="theme_light">淺色</string>
+    <string name="theme_dark">深色</string>
+    <string name="persistent_notification">常駐通知</string>
+    <string name="notification_style_system">系統預設</string>
+    <string name="notification_style_positioned">固定位置</string>
+    <string name="notification_style_foldable">可收納</string>
+    <string name="notification_style_system_desc">系統標準樣式，位置由系統決定，內容更新時可能跳到最上方。</string>
+    <string name="notification_style_positioned_desc">系統標準樣式，固定在通知欄最上方，或排在其他較新的通知下方。</string>
+    <string name="notification_style_foldable_desc">長按通知可以收納到「更多通知」。</string>
+    <string name="notification_position_top">置頂</string>
+    <string name="notification_position_bottom">置底</string>
+    <string name="settings_guard">守護</string>
+    <string name="night_guard">夜間守護</string>
+    <string name="night_guard_summary">把 GMS 加入遊戲白名單，避免夜間被凍結</string>
+    <string name="self_in_game_allowlist">本 App 也加入遊戲白名單</string>
+    <string name="self_in_game_allowlist_summary">把自己加入遊戲白名單</string>
+    <string name="persistent_notification_summary">以前景服務常駐，即時監聽名單變化。關閉後在背景的反應可能會明顯變慢。</string>
+    <string name="settings_uninstall">解除安裝</string>
+    <string name="cleanup_running">清理中…</string>
+    <string name="cleanup_summary">只移除本 App 加入遊戲白名單的項目，並停止自動守護</string>
+    <string name="cleanup_footnote">解除安裝前請先清理。解除安裝後 App 就沒有機會再執行清理，留在遊戲白名單中的項目會一直生效。</string>
+
+    <!-- 關於頁 -->
+    <string name="about_version">版本 %1$s（%2$d）</string>
+    <string name="about_version_unknown">版本未知</string>
+    <string name="about_write_permission">寫入權限</string>
+    <string name="about_write_permission_hint">點此前往開啟</string>
+    <string name="about_power_policy">省電策略</string>
+    <string name="about_power_policy_hint">點此前往設為「無限制」</string>
+    <string name="about_autostart">自啟動</string>
+    <string name="about_autostart_hint">點此前往應用管理開啟</string>
+    <string name="about_system_version">系統版本</string>
+    <string name="about_source_code">原始碼</string>
+    <string name="about_license">授權條款</string>
+    <string name="about_footnote">Suzumori 必須一直在背景才能即時補回名單。沒有「自啟動」時，小米不會在開機時通知本 App。</string>
+    <string name="status_on">已開啟</string>
+    <string name="status_off">未開啟</string>
+    <string name="status_unreadable">無法讀取</string>
+    <string name="power_no_restrictions">無限制</string>
+    <string name="power_restricted">未設為無限制</string>
+
+    <!-- 常駐通知 -->
+    <string name="notification_channel_name">守護狀態</string>
+    <string name="notification_channel_description">Suzumori 在背景監聽名單變化時顯示的常駐通知</string>
+    <string name="notification_title">正在守護 FCM 推播</string>
+    <string name="notification_last_patch">最近修補：%1$s・%2$s</string>
+    <string name="notification_watching">正在監聽名單變化</string>
+
+    <!-- 觸發原因 -->
+    <string name="trigger_app_open">開啟 App</string>
+    <string name="trigger_manual_check">手動檢查</string>
+    <string name="trigger_manual_unfreeze">手動解凍</string>
+    <string name="trigger_tile">快速設定磚</string>
+    <string name="trigger_millet_changed">MILLET 名單變更</string>
+    <string name="trigger_game_allowlist_changed">遊戲白名單變更</string>
+    <string name="trigger_screen_on">螢幕開啟</string>
+    <string name="trigger_screen_off">螢幕關閉</string>
+    <string name="trigger_locked_boot">開機（解鎖前）</string>
+    <string name="trigger_boot">開機</string>
+    <string name="trigger_package_replaced">App 更新</string>
+    <string name="trigger_periodic">定期檢查</string>
+    <string name="trigger_service_start">服務啟動</string>
+    <string name="trigger_settings_changed">設定變更</string>
+    <string name="trigger_uninstall_cleanup">解除安裝前清理</string>
+    <string name="trigger_self_monitor">自我監測</string>
+
+    <!-- 守護核心寫進事件紀錄的文字 -->
+    <string name="log_self_app">本 App</string>
+    <string name="log_list_separator">、</string>
+    <string name="log_clause_separator">；</string>
+    <string name="log_skip_patch">略過修補</string>
+    <string name="log_paused_by_rate_limit">修補次數超過上限，暫停中</string>
+    <string name="log_append">追加 %s</string>
+    <string name="log_remove">移除 %s</string>
+    <string name="log_toggle_separator">結尾底線切換（開機後重新載入）</string>
+    <string name="log_millet_restored">MILLET 補回 %s</string>
+    <string name="log_game_allowlist_reloaded">遊戲白名單重新載入</string>
+    <string name="log_game_allowlist_restored">遊戲白名單補回 %s</string>
+    <string name="log_cleanup_game_allowlist">清理遊戲白名單</string>
+    <string name="log_no_baseline">沒有基準紀錄，本 App 沒有寫入過遊戲白名單</string>
+    <string name="log_nothing_owned">名單中沒有本 App 加入的項目</string>
+    <string name="log_no_write_permission">沒有「修改系統設定」權限，無法寫入</string>
+    <string name="log_retry">%1$s（第 %2$d 次重試）</string>
+    <string name="log_rate_limited">每分鐘修補超過 %1$d 次，暫停 %2$d 分鐘</string>
+    <string name="log_exception">例外：%s</string>
+    <string name="log_success">成功</string>
+    <string name="log_verify_failed">驗證失敗</string>
+    <string name="log_external_change">偵測到外部變更（%s）</string>
+    <string name="log_members_unchanged">成員不變</string>
+    <string name="log_removed_members">移除 %s</string>
+    <string name="log_added_members">新增 %s</string>
+    <string name="log_gms_in_list">GMS 在名單中</string>
+    <string name="log_gms_not_in_list">GMS 不在名單中</string>
+    <string name="log_send_unfreeze">送出解凍廣播</string>
+    <string name="log_send_reconnect">送出重連廣播</string>
+    <string name="log_unfreeze_summary">已送出解凍與重連</string>
+    <string name="log_sent">%s：已送出</string>
+    <string name="log_send_exception">%1$s：例外 %2$s</string>
+    <string name="log_truncated">…（共 %d 字）</string>
+
+    <!-- 自我監測 -->
+    <string name="self_exit_action">程序曾被結束（%s）</string>
+    <string name="self_exit_with_description">%1$s：%2$s</string>
+    <string name="self_killed_summary">程序被結束：%s</string>
+    <string name="self_auto_restarted">程序自動重新啟動</string>
+    <string name="self_user_opened">程序由使用者開啟</string>
+    <string name="self_started">程序已啟動</string>
+    <string name="self_start_unknown">啟動原因不明</string>
+    <string name="self_since_last_exit">%1$s・距離上次被結束 %2$s</string>
+    <string name="self_paused_action">本 App 曾被暫停</string>
+    <string name="self_paused_result">約 %d 秒（期間 CPU 醒著，但本 App 沒有執行）</string>
+    <string name="self_paused_summary">被暫停約 %d 秒</string>
+    <string name="start_service">系統重新啟動背景服務</string>
+    <string name="start_boot">開機後自動啟動</string>
+    <string name="start_package_replaced">App 更新後重新啟動</string>
+    <string name="start_broadcast">收到系統廣播後啟動</string>
+    <string name="start_job">定期檢查排程喚醒</string>
+    <string name="start_alarm">鬧鐘排程喚醒</string>
+    <string name="start_push">推播喚醒</string>
+    <string name="start_content_provider">被其他程式查詢資料時啟動</string>
+    <string name="start_backup">系統備份時啟動</string>
+    <string name="start_launcher">從桌面開啟</string>
+    <string name="start_recents">從多工畫面開啟</string>
+    <string name="start_activity">開啟 App 畫面</string>
+    <string name="start_other">其他原因（%d）</string>
+    <string name="exit_self">自行結束</string>
+    <string name="exit_signaled">被訊號終止（常見於系統或省電機制殺掉程序）</string>
+    <string name="exit_low_memory">記憶體不足</string>
+    <string name="exit_crash">閃退</string>
+    <string name="exit_crash_native">原生程式閃退</string>
+    <string name="exit_anr">沒有回應（ANR）</string>
+    <string name="exit_initialization_failure">初始化失敗</string>
+    <string name="exit_permission_change">權限變更</string>
+    <string name="exit_excessive_resource_usage">資源使用過量</string>
+    <string name="exit_user_requested">使用者或系統要求停止（含強制停止）</string>
+    <string name="exit_user_stopped">使用者帳號停止</string>
+    <string name="exit_dependency_died">依賴的程序結束</string>
+    <string name="exit_other">系統其他原因</string>
+    <string name="exit_freezer">凍結期間被結束</string>
+    <string name="exit_package_state_change">App 狀態變更</string>
+    <string name="exit_package_updated">App 更新</string>
+    <string name="exit_unknown">未知原因（%d）</string>
+    <string name="exit_force_stopped_by">被%s強制停止</string>
+    <string name="clean_swipe_up">從多工畫面滑掉</string>
+    <string name="clean_one_key">在多工畫面一鍵清理</string>
+    <string name="clean_force">被系統強制清理</string>
+    <string name="clean_lock_screen">鎖屏後被清理</string>
+    <string name="clean_garbage">被垃圾清理結束</string>
+    <string name="clean_optimization">被手機管家最佳化清理</string>
+    <string name="clean_game">遊戲加速時被清理</string>
+    <string name="clean_auto_power">被省電機制結束</string>
+    <string name="clean_auto_thermal">過熱保護時被結束</string>
+    <string name="clean_auto_idle">閒置時被系統結束</string>
+    <string name="clean_auto_sleep">睡眠時被自動清理</string>
+    <string name="clean_auto_lock_off">鎖屏後被自動清理</string>
+    <string name="clean_auto_system_abnormal">系統異常時被自動清理</string>
+    <string name="package_security_center">手機管家</string>
+    <string name="package_settings">系統設定</string>
+</resources>

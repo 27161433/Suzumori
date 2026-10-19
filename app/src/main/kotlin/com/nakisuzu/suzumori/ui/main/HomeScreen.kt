@@ -43,8 +43,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -134,9 +137,9 @@ private fun Header(onFcmDiagnostics: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(text = "Suzumori", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurface, maxLines = 1)
-            Text(text = "鈴守・守護 FCM 推播", fontSize = 12.sp, color = colors.onSurfaceMuted, maxLines = 1)
+            Text(text = stringResource(R.string.app_tagline), fontSize = 12.sp, color = colors.onSurfaceMuted, maxLines = 1)
         }
-        SquareIconButton(icon = SzIcons.Pulse, contentDescription = "FCM 診斷頁面", onClick = onFcmDiagnostics)
+        SquareIconButton(icon = SzIcons.Pulse, contentDescription = stringResource(R.string.fcm_diagnostics), onClick = onFcmDiagnostics)
     }
 }
 
@@ -167,13 +170,13 @@ private enum class HeroKind { LOADING, GUARDING, PAUSED, ATTENTION }
 
 private data class Hero(val kind: HeroKind, val title: String, val line1: String, val line2: String, val line2Color: Color)
 
-/** 會讓守護失效的問題，依嚴重程度排列。 */
-private fun problems(state: MainUiState): List<String> = buildList {
-    if (!state.canWrite) add("寫入權限未開啟")
-    if (!state.selfNoRestrict) add("省電策略未設為「無限制」")
-    if (state.selfAutoStart == false) add("自啟動未開啟")
-    if (!state.milletHasGms) add("GMS 不在 MILLET 名單")
-    if (state.config.nightProtection && !state.gameHasGms) add("GMS 不在遊戲白名單")
+/** 會讓守護失效的問題（字串資源），依嚴重程度排列。 */
+private fun problems(state: MainUiState): List<Int> = buildList {
+    if (!state.canWrite) add(R.string.problem_write_permission)
+    if (!state.selfNoRestrict) add(R.string.problem_power_policy)
+    if (state.selfAutoStart == false) add(R.string.problem_autostart)
+    if (!state.milletHasGms) add(R.string.problem_millet)
+    if (state.config.nightProtection && !state.gameHasGms) add(R.string.problem_game_allowlist)
 }
 
 private val DAY_START: LocalTime = LocalTime.of(8, 0)
@@ -182,42 +185,45 @@ private val NIGHT_START: LocalTime = LocalTime.of(23, 0)
 @Composable
 private fun rememberHero(state: MainUiState, now: LocalTime): Hero {
     val colors = SuzumoriTheme.colors
+    val context = LocalContext.current
     val problems = problems(state)
     val nightOn = state.config.nightProtection
     val busyLine = when (state.busyAction) {
-        BusyAction.CHECK -> "正在檢查名單…"
-        BusyAction.UNFREEZE -> "正在送出解凍與重連…"
-        BusyAction.CLEANUP -> "正在清理…"
+        BusyAction.CHECK -> stringResource(R.string.hero_busy_check)
+        BusyAction.UNFREEZE -> stringResource(R.string.hero_busy_unfreeze)
+        BusyAction.CLEANUP -> stringResource(R.string.hero_busy_cleanup)
         null -> null
     }
+    val guarding = stringResource(R.string.hero_guarding)
+    val nightOff = stringResource(R.string.hero_night_off)
     return when {
-        !state.loaded -> Hero(HeroKind.LOADING, "讀取中", "", "", colors.onSurfaceMuted)
+        !state.loaded -> Hero(HeroKind.LOADING, stringResource(R.string.hero_loading), "", "", colors.onSurfaceMuted)
         problems.isNotEmpty() -> Hero(
             HeroKind.ATTENTION,
-            "需要處理",
-            busyLine ?: "${problems.size} 個問題讓守護失效",
-            problems.first(),
+            stringResource(R.string.hero_attention),
+            busyLine ?: pluralStringResource(R.plurals.hero_problem_count, problems.size, problems.size),
+            stringResource(problems.first()),
             colors.warn,
         )
         !state.config.autoGuard -> Hero(
             HeroKind.PAUSED,
-            "已暫停",
-            busyLine ?: "自動守護已關閉",
-            "名單被改寫時不會自動補回",
+            stringResource(R.string.hero_paused),
+            busyLine ?: stringResource(R.string.hero_auto_guard_off),
+            stringResource(R.string.hero_paused_detail),
             colors.onSurfaceMuted,
         )
         isNightWindow(now) -> Hero(
             HeroKind.GUARDING,
-            "守護中",
-            busyLine ?: if (nightOn) "夜間防線生效中" else "夜間守護已關閉",
-            "距白天防線 ${TimeText.until(now, DAY_START)}",
+            guarding,
+            busyLine ?: if (nightOn) stringResource(R.string.hero_night_active) else nightOff,
+            stringResource(R.string.hero_until_day, TimeText.until(context, now, DAY_START)),
             colors.day,
         )
         else -> Hero(
             HeroKind.GUARDING,
-            "守護中",
-            busyLine ?: "白天防線生效中",
-            if (nightOn) "距夜間防線 ${TimeText.until(now, NIGHT_START)}" else "夜間守護已關閉",
+            guarding,
+            busyLine ?: stringResource(R.string.hero_day_active),
+            if (nightOn) stringResource(R.string.hero_until_night, TimeText.until(context, now, NIGHT_START)) else nightOff,
             if (nightOn) colors.night else colors.onSurfaceMuted,
         )
     }
@@ -278,27 +284,27 @@ private fun HeroSection(
         AnimatedVisibility(visible = state.loaded && !state.canWrite, enter = revealIn, exit = revealOut) {
             AttentionCard(
                 icon = SzIcons.Key,
-                title = "寫入權限未開啟",
-                text = "沒有「修改系統設定」權限就無法補回名單。開啟後回到 App 會自動重新檢查。",
-                button = "前往開啟",
+                title = stringResource(R.string.problem_write_permission),
+                text = stringResource(R.string.attention_write_text),
+                button = stringResource(R.string.go_turn_on),
                 onClick = onOpenWriteSettings,
             )
         }
         AnimatedVisibility(visible = state.loaded && !state.selfNoRestrict, enter = revealIn, exit = revealOut) {
             AttentionCard(
                 icon = SzIcons.Battery,
-                title = "省電策略未設為「無限制」",
-                text = "把「省電策略」設為「無限制」，否則 Suzumori 在背景會被凍結。",
-                button = "前往設定",
+                title = stringResource(R.string.problem_power_policy),
+                text = stringResource(R.string.attention_power_text),
+                button = stringResource(R.string.go_settings),
                 onClick = onOpenPowerPolicy,
             )
         }
         AnimatedVisibility(visible = state.loaded && state.selfAutoStart == false, enter = revealIn, exit = revealOut) {
             AttentionCard(
                 icon = SzIcons.Power,
-                title = "自啟動未開啟",
-                text = "在應用管理開啟「自啟動」。沒有自啟動時，小米不會在開機時通知本 App，被結束後也可能無法自動重新啟動。",
-                button = "前往開啟",
+                title = stringResource(R.string.problem_autostart),
+                text = stringResource(R.string.attention_autostart_text),
+                button = stringResource(R.string.go_turn_on),
                 onClick = onOpenAppDetails,
             )
         }
@@ -346,11 +352,12 @@ private fun HeroCenter(hero: Hero, autoGuard: Boolean, autoGuardEnabled: Boolean
                 }
                 Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(28.dp), tint = animatedTint)
             }
+            val autoGuardLabel = stringResource(R.string.auto_guard)
             Switch(
                 checked = autoGuard,
                 onCheckedChange = onAutoGuardChange,
                 enabled = autoGuardEnabled,
-                modifier = Modifier.semantics { contentDescription = "自動守護" },
+                modifier = Modifier.semantics { contentDescription = autoGuardLabel },
             )
         }
         Spacer(Modifier.height(12.dp))
@@ -385,8 +392,8 @@ private fun Legend() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally),
     ) {
-        LegendItem(colors.day, "白天 08:00–22:59")
-        LegendItem(colors.night, "夜間 23:00–07:59")
+        LegendItem(colors.day, stringResource(R.string.legend_day))
+        LegendItem(colors.night, stringResource(R.string.legend_night))
     }
 }
 
@@ -455,7 +462,7 @@ private data class Line(
     val accent: Color,
     val label: String,
     val title: String,
-    val badge: String,
+    val active: Boolean,
     val chip: Chip,
 )
 
@@ -465,20 +472,21 @@ private fun StatusTiles(state: MainUiState, now: LocalTime, onOpenLog: () -> Uni
     val colors = SuzumoriTheme.colors
     val night = isNightWindow(now)
     val nightOn = state.config.nightProtection
-    val loading = Chip("讀取中", colors.onSurfaceMuted, colors.surfaceVariant)
-    val inList = Chip("GMS 已在名單", colors.good, colors.goodContainer)
-    val missing = Chip("GMS 不在名單", colors.warn, colors.warnContainer)
+    val loading = Chip(stringResource(R.string.hero_loading), colors.onSurfaceMuted, colors.surfaceVariant)
+    val inList = Chip(stringResource(R.string.chip_gms_listed), colors.good, colors.goodContainer)
+    val missing = Chip(stringResource(R.string.chip_gms_missing), colors.warn, colors.warnContainer)
+    val nightOff = Chip(stringResource(R.string.hero_night_off), colors.onSurfaceMuted, colors.surfaceVariant)
     val line = if (night) {
         Line(
             night = true,
             icon = SzIcons.Moon,
             accent = colors.night,
-            label = "夜間防線・至 07:59",
-            title = "遊戲白名單",
-            badge = if (nightOn) "生效中" else "已關閉",
+            label = stringResource(R.string.line_night_label),
+            title = stringResource(R.string.line_game_allowlist),
+            active = nightOn,
             chip = when {
                 !state.loaded -> loading
-                !nightOn -> Chip("夜間守護已關閉", colors.onSurfaceMuted, colors.surfaceVariant)
+                !nightOn -> nightOff
                 state.gameHasGms -> inList
                 else -> missing
             },
@@ -488,9 +496,9 @@ private fun StatusTiles(state: MainUiState, now: LocalTime, onOpenLog: () -> Uni
             night = false,
             icon = SzIcons.Sun,
             accent = colors.day,
-            label = "白天防線・至 22:59",
-            title = "MILLET 名單",
-            badge = "生效中",
+            label = stringResource(R.string.line_day_label),
+            title = stringResource(R.string.line_millet),
+            active = true,
             chip = when {
                 !state.loaded -> loading
                 state.milletHasGms -> inList
@@ -523,10 +531,10 @@ private fun StatusTiles(state: MainUiState, now: LocalTime, onOpenLog: () -> Uni
                         IconBadge(icon = current.icon, tint = current.accent, iconSize = 22.dp)
                         Spacer(Modifier.weight(1f))
                         Text(
-                            text = current.badge,
+                            text = stringResource(if (current.active) R.string.line_active else R.string.line_off),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (current.badge == "生效中") current.accent else colors.onSurfaceMuted,
+                            color = if (current.active) current.accent else colors.onSurfaceMuted,
                         )
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -558,15 +566,15 @@ private fun RecentTile(state: MainUiState, onClick: () -> Unit, modifier: Modifi
         verticalArrangement = Arrangement.SpaceBetween,
         onClick = onClick,
     ) {
-        RecentLine(label = "最近修補", millis = state.lastPatch?.atMillis)
-        RecentLine(label = "最近解凍", millis = state.lastUnfreeze?.atMillis)
+        RecentLine(label = stringResource(R.string.recent_patch), millis = state.lastPatch?.atMillis)
+        RecentLine(label = stringResource(R.string.recent_unfreeze), millis = state.lastUnfreeze?.atMillis)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(text = "運作狀況", fontSize = 12.sp, color = colors.onSurfaceMuted)
+            Text(text = stringResource(R.string.recent_health), fontSize = 12.sp, color = colors.onSurfaceMuted)
             if (issue == null) {
-                Text(text = "正常", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.good)
+                Text(text = stringResource(R.string.recent_normal), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.good)
             } else {
                 Text(
-                    text = "${TimeText.clock(issue.atMillis)} 曾被結束",
+                    text = stringResource(R.string.recent_killed_at, TimeText.clock(issue.atMillis)),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.warn,
@@ -580,18 +588,19 @@ private fun RecentTile(state: MainUiState, onClick: () -> Unit, modifier: Modifi
 @Composable
 private fun RecentLine(label: String, millis: Long?) {
     val colors = SuzumoriTheme.colors
+    val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = label, fontSize = 12.sp, color = colors.onSurfaceMuted)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = millis?.let(TimeText::clock) ?: "尚無",
+                text = millis?.let(TimeText::clock) ?: stringResource(R.string.none_yet),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (millis == null) colors.onSurfaceMuted else colors.onSurface,
                 style = TextStyle(fontFeatureSettings = "tnum"),
             )
             if (millis != null) {
-                Text(text = TimeText.shortDay(millis), fontSize = 11.sp, color = colors.onSurfaceMuted)
+                Text(text = TimeText.shortDay(context, millis), fontSize = 11.sp, color = colors.onSurfaceMuted)
             }
         }
     }
@@ -614,9 +623,9 @@ private fun ActionSection(state: MainUiState, onCheck: () -> Unit, onUnfreeze: (
             ActionTile(
                 modifier = Modifier.weight(1f),
                 icon = SzIcons.Refresh,
-                title = "立即檢查並修補",
-                busyTitle = "檢查中…",
-                summary = "名單正常時只讀取，不寫入也不送廣播",
+                title = stringResource(R.string.action_check),
+                busyTitle = stringResource(R.string.action_checking),
+                summary = stringResource(R.string.action_check_summary),
                 filled = true,
                 busy = running == BusyAction.CHECK,
                 dimmed = running != null && running != BusyAction.CHECK,
@@ -626,9 +635,9 @@ private fun ActionSection(state: MainUiState, onCheck: () -> Unit, onUnfreeze: (
             ActionTile(
                 modifier = Modifier.weight(1f),
                 icon = SzIcons.Signal,
-                title = "立即解凍並重連",
-                busyTitle = "送出中…",
-                summary = "先確保名單正常，再送出解凍與重連",
+                title = stringResource(R.string.action_unfreeze),
+                busyTitle = stringResource(R.string.action_sending),
+                summary = stringResource(R.string.action_unfreeze_summary),
                 filled = false,
                 busy = running == BusyAction.UNFREEZE,
                 dimmed = running != null && running != BusyAction.UNFREEZE,
@@ -636,7 +645,7 @@ private fun ActionSection(state: MainUiState, onCheck: () -> Unit, onUnfreeze: (
                 onClick = onUnfreeze,
             )
         }
-        Footnote("廣播送出後只能確認「已送出」，無法確認 GMS 有收到。是否真的連上，請點右上角開啟 FCM 診斷頁面確認。")
+        Footnote(stringResource(R.string.action_footnote))
     }
 }
 

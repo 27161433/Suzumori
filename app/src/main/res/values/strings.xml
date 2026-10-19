@@ -1,5 +1,304 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Suzumori</string>
-    <string name="tile_unfreeze">解凍並重連</string>
+<!-- 預設語言是英文；繁體中文與簡體中文在 values-zh-rTW、values-zh-rCN。三份的項目必須一致。 -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" translatable="false">Suzumori</string>
+    <!-- 語言選項一律以該語言本身的名稱顯示。 -->
+    <string name="language_traditional_chinese" translatable="false">繁體中文</string>
+    <string name="language_simplified_chinese" translatable="false">简体中文</string>
+    <string name="language_english" translatable="false">English</string>
+
+    <!-- Common -->
+    <string name="app_tagline">Keeps FCM push notifications on time</string>
+    <string name="tile_unfreeze">Unfreeze &amp; reconnect</string>
+    <string name="tile_sending">Sending…</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="later">Later</string>
+    <string name="follow_system">System</string>
+    <string name="unknown">Unknown</string>
+    <string name="none_yet">None</string>
+    <string name="cannot_open_page">Can\'t open the page</string>
+    <string name="system_version_format">%1$s (%2$s)</string>
+
+    <!-- Navigation bar -->
+    <string name="tab_home">Home</string>
+    <string name="tab_log">Events</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_about">About</string>
+
+    <!-- Home -->
+    <string name="fcm_diagnostics">FCM diagnostics</string>
+    <string name="auto_guard">Auto guard</string>
+    <string name="problem_write_permission">Write permission is off</string>
+    <string name="problem_power_policy">Battery saver isn\'t set to “No restrictions”</string>
+    <string name="problem_autostart">Autostart is off</string>
+    <string name="problem_millet">GMS isn\'t in the MILLET list</string>
+    <string name="problem_game_allowlist">GMS isn\'t in the game allowlist</string>
+    <string name="hero_busy_check">Checking the lists…</string>
+    <string name="hero_busy_unfreeze">Sending unfreeze and reconnect…</string>
+    <string name="hero_busy_cleanup">Cleaning up…</string>
+    <string name="hero_loading">Loading</string>
+    <string name="hero_attention">Action needed</string>
+    <plurals name="hero_problem_count">
+        <item quantity="one">%d issue is stopping the guard</item>
+        <item quantity="other">%d issues are stopping the guard</item>
+    </plurals>
+    <string name="hero_paused">Paused</string>
+    <string name="hero_auto_guard_off">Auto guard is off</string>
+    <string name="hero_paused_detail">Lists won\'t be restored when rewritten</string>
+    <string name="hero_guarding">Guarding</string>
+    <string name="hero_night_active">Night line active</string>
+    <string name="hero_night_off">Night guard is off</string>
+    <string name="hero_until_day">Day line in %s</string>
+    <string name="hero_day_active">Day line active</string>
+    <string name="hero_until_night">Night line in %s</string>
+    <string name="legend_day">Day 08:00–22:59</string>
+    <string name="legend_night">Night 23:00–07:59</string>
+    <string name="attention_write_text">Without the “Modify system settings” permission, Suzumori can\'t restore the lists. It checks again when you come back.</string>
+    <string name="attention_power_text">Set the battery saver to “No restrictions”, or Suzumori will be frozen in the background.</string>
+    <string name="attention_autostart_text">Turn on “Autostart” in app management. Without it, Xiaomi won\'t notify Suzumori at boot, and it may not restart after being killed.</string>
+    <string name="go_turn_on">Turn on</string>
+    <string name="go_settings">Open settings</string>
+    <string name="chip_gms_listed">GMS is listed</string>
+    <string name="chip_gms_missing">GMS is missing</string>
+    <string name="line_night_label">Night line · until 07:59</string>
+    <string name="line_day_label">Day line · until 22:59</string>
+    <string name="line_game_allowlist">Game allowlist</string>
+    <string name="line_millet">MILLET list</string>
+    <string name="line_active">Active</string>
+    <string name="line_off">Off</string>
+    <string name="recent_patch">Last patch</string>
+    <string name="recent_unfreeze">Last unfreeze</string>
+    <string name="recent_health">Health</string>
+    <string name="recent_normal">Normal</string>
+    <string name="recent_killed_at">Killed at %s</string>
+    <string name="action_check">Check &amp; fix now</string>
+    <string name="action_checking">Checking…</string>
+    <string name="action_check_summary">Only reads when the lists are fine; no writes or broadcasts</string>
+    <string name="action_unfreeze">Unfreeze now</string>
+    <string name="action_sending">Sending…</string>
+    <string name="action_unfreeze_summary">Makes sure the lists are fine, then sends unfreeze and reconnect</string>
+    <string name="action_footnote">A broadcast can only be confirmed as sent, not as received by GMS. To check the connection, open FCM diagnostics at the top right.</string>
+
+    <!-- Home dialogs -->
+    <string name="check_done">Check complete</string>
+    <string name="check_paused">Too many patches per minute, so patching is paused. Another app may be rewriting the lists repeatedly. See the event log.</string>
+    <string name="check_failed">Some patches failed. See the event log.</string>
+    <string name="check_patched">Restored the lists and sent unfreeze and reconnect.</string>
+    <string name="check_first_boot">The lists are fine. This is the first check since boot, so unfreeze and reconnect were sent.</string>
+    <string name="check_ok">The lists are fine. Nothing to fix.</string>
+    <string name="unfreeze_sent">Sent</string>
+    <string name="unfreeze_sent_text">Sent the unfreeze and reconnect broadcasts. Delivery can\'t be confirmed, so open FCM diagnostics to check the connection.</string>
+    <string name="unfreeze_patched_sent_text">Restored the lists first, then sent the unfreeze and reconnect broadcasts. Delivery can\'t be confirmed, so open FCM diagnostics to check the connection.</string>
+    <string name="cleanup_title">Clean up before uninstalling</string>
+    <string name="cleanup_confirm_text">This stops auto guard and night guard, and removes from the game allowlist only the entries this app added. Entries from other apps are kept. The MILLET list needs no cleanup; PowerKeeper drops GMS the next time it rebuilds the list.</string>
+    <string name="cleanup_confirm">Clean up</string>
+    <string name="cleanup_done">Cleanup finished</string>
+    <string name="cleanup_go_uninstall">Uninstall</string>
+    <string name="cleanup_removed">Removed the entries this app added to the game allowlist and stopped auto guard. You can uninstall now.</string>
+    <string name="cleanup_nothing">The game allowlist has no entries added by this app. Auto guard is stopped. You can uninstall now.</string>
+    <string name="cleanup_failed">Cleanup failed. See the event log, make sure “Modify system settings” is still on, then try again.</string>
+
+    <!-- Event log -->
+    <string name="log_export">Export</string>
+    <string name="log_clear">Clear</string>
+    <string name="log_export_failed">Can\'t export</string>
+    <plurals name="log_count">
+        <item quantity="one">%d recent entry · keeps up to 2,000</item>
+        <item quantity="other">%d recent entries · keeps up to 2,000</item>
+    </plurals>
+    <string name="log_hint">Records every list rewrite, patch and broadcast, so you can see how often and when PowerKeeper and Joyose rewrite the lists.</string>
+    <string name="log_empty">No entries yet</string>
+    <string name="log_before">Before</string>
+    <string name="log_after">After</string>
+    <string name="log_collapse">Hide</string>
+    <string name="log_show_values">Show values before and after</string>
+    <string name="log_clear_title">Clear the event log</string>
+    <string name="log_clear_text">This can\'t be undone. If you still want to track list changes, export first.</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="date_month_day_pattern">MMM d</string>
+    <string name="date_short_pattern">M/d</string>
+    <string name="duration_seconds">%d s</string>
+    <string name="duration_minutes">%d min</string>
+    <string name="duration_hours">%d h</string>
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
+    <string name="duration_days">%d d</string>
+
+    <!-- Exported event log -->
+    <string name="export_subject">Suzumori event log</string>
+    <string name="export_chooser">Export event log</string>
+    <string name="export_header">Suzumori event log (exported %s)</string>
+    <plurals name="export_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <string name="export_action">Action: %s</string>
+    <string name="export_result">Result: %s</string>
+    <string name="export_before">Before: \"%s\"</string>
+    <string name="export_after">After: \"%s\"</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_theme">App theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="persistent_notification">Persistent notification</string>
+    <string name="notification_style_system">Default</string>
+    <string name="notification_style_positioned">Pinned</string>
+    <string name="notification_style_foldable">Foldable</string>
+    <string name="notification_style_system_desc">Standard system style. The system decides where it goes, and it may jump to the top when it updates.</string>
+    <string name="notification_style_positioned_desc">Standard system style, pinned to the top of the shade or kept below newer notifications.</string>
+    <string name="notification_style_foldable_desc">Long-press the notification to fold it into “More notifications”.</string>
+    <string name="notification_position_top">Top</string>
+    <string name="notification_position_bottom">Bottom</string>
+    <string name="settings_guard">Guard</string>
+    <string name="night_guard">Night guard</string>
+    <string name="night_guard_summary">Adds GMS to the game allowlist so it isn\'t frozen at night</string>
+    <string name="self_in_game_allowlist">Add this app to the game allowlist too</string>
+    <string name="self_in_game_allowlist_summary">Adds Suzumori itself to the game allowlist</string>
+    <string name="persistent_notification_summary">Runs as a foreground service to react to list changes right away. Without it, background reactions may be much slower.</string>
+    <string name="settings_uninstall">Uninstall</string>
+    <string name="cleanup_running">Cleaning up…</string>
+    <string name="cleanup_summary">Removes only what this app added to the game allowlist, and stops auto guard</string>
+    <string name="cleanup_footnote">Clean up before uninstalling. Once uninstalled, the app can\'t clean up, and its game allowlist entries stay in effect.</string>
+
+    <!-- About -->
+    <string name="about_version">Version %1$s (%2$d)</string>
+    <string name="about_version_unknown">Version unknown</string>
+    <string name="about_write_permission">Write permission</string>
+    <string name="about_write_permission_hint">Tap to turn on</string>
+    <string name="about_power_policy">Battery saver</string>
+    <string name="about_power_policy_hint">Tap to set “No restrictions”</string>
+    <string name="about_autostart">Autostart</string>
+    <string name="about_autostart_hint">Tap to turn on in app management</string>
+    <string name="about_system_version">System version</string>
+    <string name="about_source_code">Source code</string>
+    <string name="about_license">License</string>
+    <string name="about_footnote">Suzumori has to stay in the background to restore the lists right away. Without “Autostart”, Xiaomi won\'t notify it at boot.</string>
+    <string name="status_on">On</string>
+    <string name="status_off">Off</string>
+    <string name="status_unreadable">Unknown</string>
+    <string name="power_no_restrictions">No restrictions</string>
+    <string name="power_restricted">Restricted</string>
+
+    <!-- Persistent notification -->
+    <string name="notification_channel_name">Guard status</string>
+    <string name="notification_channel_description">Shown while Suzumori watches for list changes in the background</string>
+    <string name="notification_title">Guarding FCM push</string>
+    <string name="notification_last_patch">Last patch: %1$s · %2$s</string>
+    <string name="notification_watching">Watching for list changes</string>
+
+    <!-- Triggers -->
+    <string name="trigger_app_open">App opened</string>
+    <string name="trigger_manual_check">Manual check</string>
+    <string name="trigger_manual_unfreeze">Manual unfreeze</string>
+    <string name="trigger_tile">Quick settings tile</string>
+    <string name="trigger_millet_changed">MILLET list changed</string>
+    <string name="trigger_game_allowlist_changed">Game allowlist changed</string>
+    <string name="trigger_screen_on">Screen on</string>
+    <string name="trigger_screen_off">Screen off</string>
+    <string name="trigger_locked_boot">Boot (before unlock)</string>
+    <string name="trigger_boot">Boot</string>
+    <string name="trigger_package_replaced">App updated</string>
+    <string name="trigger_periodic">Periodic check</string>
+    <string name="trigger_service_start">Service started</string>
+    <string name="trigger_settings_changed">Settings changed</string>
+    <string name="trigger_uninstall_cleanup">Pre-uninstall cleanup</string>
+    <string name="trigger_self_monitor">Self-monitor</string>
+
+    <!-- Text the guard writes into the event log -->
+    <string name="log_self_app">this app</string>
+    <string name="log_list_separator">", "</string>
+    <string name="log_clause_separator">"; "</string>
+    <string name="log_skip_patch">Skipped patching</string>
+    <string name="log_paused_by_rate_limit">Too many patches; paused</string>
+    <string name="log_append">Add %s</string>
+    <string name="log_remove">Remove %s</string>
+    <string name="log_toggle_separator">Toggle the trailing underscore (reload after boot)</string>
+    <string name="log_millet_restored">MILLET: restored %s</string>
+    <string name="log_game_allowlist_reloaded">Game allowlist reloaded</string>
+    <string name="log_game_allowlist_restored">Game allowlist: restored %s</string>
+    <string name="log_cleanup_game_allowlist">Clean up the game allowlist</string>
+    <string name="log_no_baseline">No baseline; this app never wrote to the game allowlist</string>
+    <string name="log_nothing_owned">The list has no entries added by this app</string>
+    <string name="log_no_write_permission">No “Modify system settings” permission; can\'t write</string>
+    <string name="log_retry">%1$s (retry %2$d)</string>
+    <!-- 上限固定是每分鐘 10 次，截斷時原本至少 120 字，數字一定大於 1，不需要單複數。 -->
+    <string name="log_rate_limited" tools:ignore="PluralsCandidate">More than %1$d patches per minute; paused for %2$d min</string>
+    <string name="log_exception">Exception: %s</string>
+    <string name="log_success">Success</string>
+    <string name="log_verify_failed">Verification failed</string>
+    <string name="log_external_change">External change detected (%s)</string>
+    <string name="log_members_unchanged">members unchanged</string>
+    <string name="log_removed_members">removed %s</string>
+    <string name="log_added_members">added %s</string>
+    <string name="log_gms_in_list">GMS is in the list</string>
+    <string name="log_gms_not_in_list">GMS is not in the list</string>
+    <string name="log_send_unfreeze">Sent the unfreeze broadcast</string>
+    <string name="log_send_reconnect">Sent the reconnect broadcasts</string>
+    <string name="log_unfreeze_summary">Sent unfreeze and reconnect</string>
+    <string name="log_sent">%s: sent</string>
+    <string name="log_send_exception">%1$s: exception %2$s</string>
+    <string name="log_truncated" tools:ignore="PluralsCandidate">… (%d chars)</string>
+
+    <!-- Self-monitor -->
+    <string name="self_exit_action">Process was killed (%s)</string>
+    <string name="self_exit_with_description">%1$s: %2$s</string>
+    <string name="self_killed_summary">Process killed: %s</string>
+    <string name="self_auto_restarted">Process restarted automatically</string>
+    <string name="self_user_opened">Process started by the user</string>
+    <string name="self_started">Process started</string>
+    <string name="self_start_unknown">Unknown start reason</string>
+    <string name="self_since_last_exit">%1$s · %2$s after the last kill</string>
+    <string name="self_paused_action">This app was paused</string>
+    <string name="self_paused_result">About %d s (the CPU was awake, but this app didn\'t run)</string>
+    <string name="self_paused_summary">Paused for about %d s</string>
+    <string name="start_service">The system restarted the background service</string>
+    <string name="start_boot">Started after boot</string>
+    <string name="start_package_replaced">Restarted after an app update</string>
+    <string name="start_broadcast">Started by a system broadcast</string>
+    <string name="start_job">Woken by the periodic check</string>
+    <string name="start_alarm">Woken by an alarm</string>
+    <string name="start_push">Woken by a push message</string>
+    <string name="start_content_provider">Started when another app queried its data</string>
+    <string name="start_backup">Started for a system backup</string>
+    <string name="start_launcher">Opened from the launcher</string>
+    <string name="start_recents">Opened from recents</string>
+    <string name="start_activity">App screen opened</string>
+    <string name="start_other">Other reason (%d)</string>
+    <string name="exit_self">Exited by itself</string>
+    <string name="exit_signaled">Killed by a signal (often the system or battery saver)</string>
+    <string name="exit_low_memory">Low memory</string>
+    <string name="exit_crash">Crashed</string>
+    <string name="exit_crash_native">Native crash</string>
+    <string name="exit_anr">Not responding (ANR)</string>
+    <string name="exit_initialization_failure">Initialization failed</string>
+    <string name="exit_permission_change">Permission changed</string>
+    <string name="exit_excessive_resource_usage">Excessive resource usage</string>
+    <string name="exit_user_requested">Stopped by the user or system (including force stop)</string>
+    <string name="exit_user_stopped">User account stopped</string>
+    <string name="exit_dependency_died">A process it depends on died</string>
+    <string name="exit_other">Other system reason</string>
+    <string name="exit_freezer">Killed while frozen</string>
+    <string name="exit_package_state_change">App state changed</string>
+    <string name="exit_package_updated">App updated</string>
+    <string name="exit_unknown">Unknown reason (%d)</string>
+    <string name="exit_force_stopped_by">Force-stopped by %s</string>
+    <string name="clean_swipe_up">Swiped away from recents</string>
+    <string name="clean_one_key">Cleared from recents</string>
+    <string name="clean_force">Force-cleaned by the system</string>
+    <string name="clean_lock_screen">Cleaned after the screen locked</string>
+    <string name="clean_garbage">Killed by junk cleanup</string>
+    <string name="clean_optimization">Cleaned by Security optimization</string>
+    <string name="clean_game">Cleaned by game turbo</string>
+    <string name="clean_auto_power">Killed by battery saver</string>
+    <string name="clean_auto_thermal">Killed by thermal protection</string>
+    <string name="clean_auto_idle">Killed while idle</string>
+    <string name="clean_auto_sleep">Cleaned during sleep</string>
+    <string name="clean_auto_lock_off">Auto-cleaned after the screen locked</string>
+    <string name="clean_auto_system_abnormal">Auto-cleaned after a system fault</string>
+    <string name="package_security_center">Security</string>
+    <string name="package_settings">Settings</string>
 </resources>

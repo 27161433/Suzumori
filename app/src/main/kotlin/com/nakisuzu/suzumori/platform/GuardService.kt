@@ -3,6 +3,7 @@ package com.nakisuzu.suzumori.platform
 import android.app.Notification
 import android.app.Service
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.IBinder
 import android.os.SystemClock
 import com.nakisuzu.suzumori.SuzumoriApp
@@ -14,6 +15,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -33,6 +35,9 @@ class GuardService : Service() {
 
     /** 目前顯示中的通知（已套用使用者選的樣式與最近修補）。重新進入前景時沿用它。 */
     private var notification: Notification? = null
+
+    /** 語言或其他設定改變時加一，讓通知用新的語言重建。 */
+    private val configChanges = MutableStateFlow(0)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -94,7 +99,8 @@ class GuardService : Service() {
                 container.guardState.state.map { it.lastPatch }.distinctUntilChanged(),
                 container.appearance.notificationStyle,
                 container.appearance.notificationPosition,
-            ) { lastPatch, style, position -> Triple(lastPatch, style, position) }.collect { (lastPatch, style, position) ->
+                configChanges,
+            ) { lastPatch, style, position, _ -> Triple(lastPatch, style, position) }.collect { (lastPatch, style, position) ->
                 Diag.i("notification update style=$style position=$position")
                 notification = GuardNotifications.update(this@GuardService, lastPatch, style, position)
             }
@@ -113,6 +119,13 @@ class GuardService : Service() {
         }
         launch { container.selfMonitor.watchForPauses() }
         Diag.i("watch launched")
+    }
+
+    /** 切換 App 語言時，通知頻道名稱與通知內容都要換成新的語言。 */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        GuardNotifications.ensureChannel(this)
+        configChanges.value++
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

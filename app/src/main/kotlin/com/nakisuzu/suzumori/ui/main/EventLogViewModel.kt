@@ -1,5 +1,6 @@
 package com.nakisuzu.suzumori.ui.main
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -8,7 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.nakisuzu.suzumori.AppContainer
 import com.nakisuzu.suzumori.SuzumoriApp
 import com.nakisuzu.suzumori.core.log.EventEntry
-import com.nakisuzu.suzumori.core.log.EventLogText
+import com.nakisuzu.suzumori.platform.LogExporter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -55,12 +56,8 @@ class EventLogViewModel(private val container: AppContainer) : ViewModel() {
     /** 收起動畫結束後才清除內容。 */
     fun clearDialog() = local.update { if (it.dialogVisible) it else it.copy(dialog = null) }
 
-    /** 匯出用的純文字，舊到新。 */
-    suspend fun exportText(): String {
-        val entries = container.eventLog.entries.first()
-        val header = "Suzumori 事件紀錄（匯出時間 ${EventLogText.formatTime(System.currentTimeMillis())}）"
-        return EventLogText.format(entries, header)
-    }
+    /** 匯出用的純文字，舊到新，以目前的語言輸出。 */
+    suspend fun exportText(context: Context): String = LogExporter.format(context, container.eventLog.entries.first())
 
     private fun showDialog(dialog: LogDialog) = local.update { it.copy(dialog = dialog, dialogVisible = true) }
 

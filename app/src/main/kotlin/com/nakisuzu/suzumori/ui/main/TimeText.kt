@@ -1,5 +1,8 @@
 package com.nakisuzu.suzumori.ui.main
 
+import android.content.Context
+import com.nakisuzu.suzumori.R
+import com.nakisuzu.suzumori.platform.Labels
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -7,14 +10,15 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 
-/** 畫面上顯示的時間文字。 */
+/** 畫面上顯示的時間文字。日期與時間長度依目前的 App 語言顯示。 */
 internal object TimeText {
     private val clock = DateTimeFormatter.ofPattern("HH:mm")
     private val clockWithSeconds = DateTimeFormatter.ofPattern("HH:mm:ss")
 
     private fun zoned(millis: Long) = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+
+    private fun locale(context: Context) = context.resources.configuration.locales[0]
 
     fun clock(millis: Long): String = clock.format(zoned(millis))
 
@@ -23,37 +27,32 @@ internal object TimeText {
     fun date(millis: Long): LocalDate = zoned(millis).toLocalDate()
 
     /** 「今天」「昨天」或「10/16」。 */
-    fun shortDay(millis: Long): String {
+    fun shortDay(context: Context, millis: Long): String {
         val day = date(millis)
         val today = LocalDate.now()
         return when (day) {
-            today -> "今天"
-            today.minusDays(1) -> "昨天"
-            else -> "${day.monthValue}/${day.dayOfMonth}"
+            today -> context.getString(R.string.today)
+            today.minusDays(1) -> context.getString(R.string.yesterday)
+            else -> DateTimeFormatter.ofPattern(context.getString(R.string.date_short_pattern), locale(context)).format(day)
         }
     }
 
     /** 事件紀錄的日期分組標題：左邊是「今天」「昨天」或日期，右邊是補充。 */
-    fun dayHeader(day: LocalDate): Pair<String, String> {
+    fun dayHeader(context: Context, day: LocalDate): Pair<String, String> {
         val today = LocalDate.now()
-        val date = "${day.monthValue} 月 ${day.dayOfMonth} 日"
+        val locale = locale(context)
+        val date = DateTimeFormatter.ofPattern(context.getString(R.string.date_month_day_pattern), locale).format(day)
         return when (day) {
-            today -> "今天" to date
-            today.minusDays(1) -> "昨天" to date
-            else -> date to day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.TRADITIONAL_CHINESE)
+            today -> context.getString(R.string.today) to date
+            today.minusDays(1) -> context.getString(R.string.yesterday) to date
+            else -> date to day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
         }
     }
 
     /** 從 [from] 到下一次 [to] 還有多久，例如「1 小時 20 分」。 */
-    fun until(from: LocalTime, to: LocalTime): String {
+    fun until(context: Context, from: LocalTime, to: LocalTime): String {
         var minutes = Duration.between(from, to).toMinutes()
         if (minutes <= 0) minutes += 24 * 60
-        val hours = minutes / 60
-        val rest = minutes % 60
-        return when {
-            hours == 0L -> "$rest 分"
-            rest == 0L -> "$hours 小時"
-            else -> "$hours 小時 $rest 分"
-        }
+        return Labels.hoursMinutes(context, minutes)
     }
 }

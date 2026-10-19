@@ -52,6 +52,8 @@ object SzIcons {
     val Share by lazy { stroke("M12 3v13", "M7 8l5-5 5 5", "M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5") }
     val Home by lazy { stroke("M3 10.5L12 3l9 7.5", "M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5") }
     val Info by lazy { stroke("M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0", "M12 11v5", "M12 8h.01") }
+    val Code by lazy { stroke("M8 7l-5 5 5 5", "M16 7l5 5-5 5", "M13.5 4l-3 16") }
+    val Document by lazy { stroke("M6 3h8l4 4v14H6z", "M14 3v4h4", "M9 12h6M9 16h6") }
     val Sliders by lazy {
         stroke(
             "M4 7h10M18 7h2M4 12h2M10 12h10M4 17h8M16 17h4",

@@ -2,6 +2,7 @@ package com.nakisuzu.suzumori.platform
 
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.SuzumoriApp
 import com.nakisuzu.suzumori.core.guard.Trigger
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,7 @@ class UnfreezeTileService : TileService() {
     private fun setTileState(active: Boolean) {
         val tile = qsTile ?: return
         tile.state = if (active) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        tile.subtitle = if (active) "傳送中…" else null
+        tile.subtitle = if (active) getString(R.string.tile_sending) else null
         tile.updateTile()
     }
 }

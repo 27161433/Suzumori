@@ -10,6 +10,7 @@ import com.nakisuzu.suzumori.fakes.FakeEventLog
 import com.nakisuzu.suzumori.fakes.FakeGmsSignals
 import com.nakisuzu.suzumori.fakes.FakeGuardStateStore
 import com.nakisuzu.suzumori.fakes.FakeSettingsStore
+import com.nakisuzu.suzumori.fakes.ZhTwGuardText
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -53,6 +54,7 @@ class GuardControllerTest {
             states = states,
             bootCounter = boot,
             log = log,
+            text = ZhTwGuardText,
             selfPackage = self,
             clock = { scope.testScheduler.currentTime },
         )
@@ -102,7 +104,7 @@ class GuardControllerTest {
             override fun sendReconnect() = h.signals.sendReconnect().also { reconnectAt = testScheduler.currentTime }
         }
         val controller = GuardController(
-            h.settings, signals, h.baselines, h.configs, h.states, h.boot, h.log, self,
+            h.settings, signals, h.baselines, h.configs, h.states, h.boot, h.log, ZhTwGuardText, self,
             clock = { testScheduler.currentTime },
         )
 

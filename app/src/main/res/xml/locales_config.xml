@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App 支援的介面語言，系統設定的「App 語言」頁面會列出這些選項。與 build.gradle.kts 的 localeFilters 一致。 -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="zh-TW" />
+    <locale android:name="zh-CN" />
+</locale-config>

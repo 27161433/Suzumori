@@ -18,12 +18,13 @@ import java.time.format.DateTimeFormatter
 object GuardNotifications {
     const val ID = 1
     private const val CHANNEL_ID = "guard"
-    private const val TITLE = "正在守護 FCM 推播"
     private val time = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
 
+    /** 建立或更新通知頻道。頻道名稱跟著 App 語言，切換語言後再呼叫一次就會更新。 */
     fun ensureChannel(context: Context) {
-        val channel = NotificationChannel(CHANNEL_ID, "守護狀態", NotificationManager.IMPORTANCE_LOW).apply {
-            description = "Suzumori 在背景監聽名單變化時顯示的常駐通知"
+        val name = context.getString(R.string.notification_channel_name)
+        val channel = NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW).apply {
+            description = context.getString(R.string.notification_channel_description)
             setSound(null, null)
             enableVibration(false)
             setShowBadge(false)
@@ -43,11 +44,17 @@ object GuardNotifications {
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val text = lastPatch?.let { "最近修補：${time.format(Instant.ofEpochMilli(it.atMillis))}・${it.trigger.label}" }
-            ?: "正在監聽名單變化"
+        val title = context.getString(R.string.notification_title)
+        val text = lastPatch?.let {
+            context.getString(
+                R.string.notification_last_patch,
+                time.format(Instant.ofEpochMilli(it.atMillis)),
+                context.getString(Labels.trigger(it.trigger)),
+            )
+        } ?: context.getString(R.string.notification_watching)
         val builder = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(TITLE)
+            .setContentTitle(title)
             .setContentText(text)
             // targetSdk 22 時，build() 會在本 App 的程序裡預先產生通知版面，文字顏色在當下就固定，
             // 系統不會依深淺色重畫，在 HyperOS 的通知背景上幾乎看不到。
@@ -73,7 +80,7 @@ object GuardNotifications {
             // 系統仍會在上方加上 App 圖示與名稱的標頭，版面只負責標題與內文。
             NotificationStyle.FOLDABLE -> builder.setCustomContentView(
                 RemoteViews(context.packageName, R.layout.notification_guard).apply {
-                    setTextViewText(R.id.notification_title, TITLE)
+                    setTextViewText(R.id.notification_title, title)
                     setTextViewText(R.id.notification_text, text)
                 },
             )

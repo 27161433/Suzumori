@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Process
 import android.provider.Settings
+import androidx.core.net.toUri
 import com.nakisuzu.suzumori.core.Packages
 import com.nakisuzu.suzumori.core.util.describe
 
@@ -47,6 +48,12 @@ object SystemPages {
         Intent().setClassName(Packages.GMS, "${Packages.GMS}.gcm.GcmDiagnostics"),
     )
 
+    /** 在瀏覽器開啟原始碼頁面。 */
+    fun openSourceCode(context: Context): String? = start(context, Intent(Intent.ACTION_VIEW, SOURCE_URL.toUri()))
+
+    /** 在瀏覽器開啟授權條款全文。 */
+    fun openLicense(context: Context): String? = start(context, Intent(Intent.ACTION_VIEW, "$SOURCE_URL/blob/main/LICENSE".toUri()))
+
     /** 系統的解除安裝確認畫面。 */
     fun requestUninstall(context: Context): String? = start(context, Intent(Intent.ACTION_DELETE, packageUri(context)))
 
@@ -81,6 +88,9 @@ object SystemPages {
     }
 
     private fun packageUri(context: Context): Uri = Uri.fromParts("package", context.packageName, null)
+
+    const val SOURCE_URL = "https://github.com/OWNER/Suzumori"
+    const val LICENSE_NAME = "GPL-3.0"
 
     private const val ACTION_MIUI_APP_DETAIL = "miui.intent.action.APP_MANAGER_APPLICATION_DETAIL"
     private const val SECURITY_CENTER = "com.miui.securitycenter"

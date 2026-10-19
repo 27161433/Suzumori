@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.nakisuzu.suzumori.R
+import com.nakisuzu.suzumori.core.log.EventEntry
+import com.nakisuzu.suzumori.core.log.EventLogText
 import com.nakisuzu.suzumori.core.util.describe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,6 +20,21 @@ import java.io.File
  */
 object LogExporter {
     private const val DIRECTORY = "exports"
+
+    /** 匯出用的純文字。[entries] 舊到新，輸出也是舊到新，方便從頭閱讀一整晚的變化。 */
+    fun format(context: Context, entries: List<EventEntry>): String = buildString {
+        appendLine(context.getString(R.string.export_header, EventLogText.formatTime(System.currentTimeMillis())))
+        appendLine(context.resources.getQuantityString(R.plurals.export_count, entries.size, entries.size))
+        appendLine()
+        for (entry in entries) {
+            val trigger = Labels.trigger(context, entry.trigger)
+            appendLine("${EventLogText.formatTime(entry.timeMillis)} [$trigger]${entry.key?.let { " $it" }.orEmpty()}")
+            appendLine("  " + context.getString(R.string.export_action, entry.action))
+            appendLine("  " + context.getString(R.string.export_result, entry.result))
+            entry.before?.let { appendLine("  " + context.getString(R.string.export_before, it)) }
+            entry.after?.let { appendLine("  " + context.getString(R.string.export_after, it)) }
+        }
+    }
 
     suspend fun write(context: Context, text: String): Uri = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, DIRECTORY).apply { mkdirs() }
@@ -31,11 +49,11 @@ object LogExporter {
         val send = Intent(Intent.ACTION_SEND)
             .setType("text/plain")
             .putExtra(Intent.EXTRA_STREAM, uri)
-            .putExtra(Intent.EXTRA_SUBJECT, "Suzumori 事件紀錄")
+            .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.export_subject))
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         send.clipData = ClipData.newRawUri("suzumori-events.txt", uri)
         return try {
-            context.startActivity(Intent.createChooser(send, "匯出事件紀錄"))
+            context.startActivity(Intent.createChooser(send, context.getString(R.string.export_chooser)))
             null
         } catch (e: Exception) {
             describe(e)

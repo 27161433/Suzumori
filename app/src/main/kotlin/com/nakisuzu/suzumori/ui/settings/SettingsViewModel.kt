@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.nakisuzu.suzumori.AppContainer
 import com.nakisuzu.suzumori.SuzumoriApp
 import com.nakisuzu.suzumori.core.config.GuardConfig
+import com.nakisuzu.suzumori.platform.AppLanguage
 import com.nakisuzu.suzumori.platform.NotificationPosition
 import com.nakisuzu.suzumori.platform.NotificationStyle
 import com.nakisuzu.suzumori.platform.ThemeMode
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 
 data class SettingsUiState(
     val config: GuardConfig = GuardConfig(),
+    val language: AppLanguage = AppLanguage.SYSTEM,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val notificationStyle: NotificationStyle = NotificationStyle.SYSTEM,
     val notificationPosition: NotificationPosition = NotificationPosition.BOTTOM,
@@ -31,14 +33,18 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val busy = MutableStateFlow(false)
 
     val state: StateFlow<SettingsUiState> = combine(
-        container.configs.config,
-        container.appearance.themeMode,
+        combine(container.configs.config, container.appearance.language, container.appearance.themeMode, ::Triple),
         container.appearance.notificationStyle,
         container.appearance.notificationPosition,
         busy,
-    ) { config, themeMode, style, position, busy ->
-        SettingsUiState(config, themeMode, style, position, busy)
+    ) { (config, language, themeMode), style, position, busy ->
+        SettingsUiState(config, language, themeMode, style, position, busy)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
+
+    fun setLanguage(language: AppLanguage) = container.appearance.setLanguage(language)
+
+    /** 回到畫面時重新讀取語言，使用者可能在系統設定的「App 語言」改過。 */
+    fun refreshLanguage() = container.appearance.refreshLanguage()
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { container.appearance.setThemeMode(mode) }

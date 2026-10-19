@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,7 +58,7 @@ class MainActivity : ComponentActivity() {
 
         // 開啟系統設定頁，失敗時顯示原因。
         fun openPage(page: (Context) -> String?) {
-            page(this)?.let { viewModel.showMessage("無法開啟頁面", it) }
+            page(this)?.let { viewModel.showMessage(getString(R.string.cannot_open_page), it) }
         }
 
         setContent {
@@ -66,7 +67,13 @@ class MainActivity : ComponentActivity() {
                 val logState by logViewModel.state.collectAsStateWithLifecycle()
                 val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
                 var introShown by rememberSaveable { mutableStateOf(false) }
-                val pagerState = rememberPagerState { PAGES.size }
+                val pagerState = rememberPagerState { PAGE_COUNT }
+                val pages = listOf(
+                    NavigationItem(stringResource(R.string.tab_home), SzIcons.Home),
+                    NavigationItem(stringResource(R.string.tab_log), SzIcons.List),
+                    NavigationItem(stringResource(R.string.tab_settings), SzIcons.Sliders),
+                    NavigationItem(stringResource(R.string.tab_about), SzIcons.Info),
+                )
                 val scope = rememberCoroutineScope()
                 val background = SuzumoriTheme.colors.background
                 val pageBackdrop = rememberLayerBackdrop {
@@ -74,8 +81,11 @@ class MainActivity : ComponentActivity() {
                     drawContent()
                 }
 
-                // 從授權頁或省電設定返回時重新讀取。
-                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+                // 從授權頁、省電設定或系統的 App 語言設定返回時重新讀取。
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    viewModel.refresh()
+                    settingsViewModel.refreshLanguage()
+                }
 
                 // 不在首頁時，返回先回到首頁。
                 BackHandler(enabled = pagerState.currentPage != 0) {
@@ -96,7 +106,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .layerBackdrop(pageBackdrop),
                             // 四頁都保留，切換時捲動位置與狀態不會重置。
-                            beyondViewportPageCount = PAGES.size - 1,
+                            beyondViewportPageCount = PAGE_COUNT - 1,
                         ) { page ->
                             when (page) {
                                 0 -> HomeScreen(
@@ -120,7 +130,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         LiquidGlassNavigationBar(
-                            items = PAGES,
+                            items = pages,
                             selectedIndex = pagerState.targetPage,
                             onItemClick = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
                             backdrop = pageBackdrop,
@@ -144,11 +154,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
-        val PAGES = listOf(
-            NavigationItem("首頁", SzIcons.Home),
-            NavigationItem("事件紀錄", SzIcons.List),
-            NavigationItem("設定", SzIcons.Sliders),
-            NavigationItem("關於", SzIcons.Info),
-        )
+        /** 首頁、事件紀錄、設定、關於。 */
+        const val PAGE_COUNT = 4
     }
 }

@@ -10,6 +10,7 @@ import com.nakisuzu.suzumori.core.log.FileEventLog
 import com.nakisuzu.suzumori.core.settings.SettingsStore
 import com.nakisuzu.suzumori.core.signal.GmsSignals
 import com.nakisuzu.suzumori.platform.AndroidBootCounter
+import com.nakisuzu.suzumori.platform.AndroidGuardText
 import com.nakisuzu.suzumori.platform.AppearanceStore
 import com.nakisuzu.suzumori.platform.BroadcastGmsSignals
 import com.nakisuzu.suzumori.platform.DataStoreBaselineStore
@@ -58,6 +59,7 @@ class AppContainer(context: Context) {
         states = guardState,
         bootCounter = AndroidBootCounter(appContext.contentResolver),
         log = eventLog,
+        text = AndroidGuardText(appContext),
         selfPackage = appContext.packageName,
     )
 

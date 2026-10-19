@@ -61,6 +61,12 @@ android {
         compose = true
     }
 
+    // 介面只有英文（預設）、繁體中文與簡體中文，與 res/xml/locales_config.xml 一致。
+    // 依賴套件裡其他語言的字串一併移除，避免畫面混雜沒有翻譯的語言。
+    androidResources {
+        localeFilters += listOf("en", "zh-rTW", "zh-rCN")
+    }
+
     lint {
         // targetSdk 固定為 22 是刻意的設計（見 defaultConfig 的說明），
         // 以下檢查只是在提醒 targetSdk 過舊，針對性停用，其他檢查維持預設。

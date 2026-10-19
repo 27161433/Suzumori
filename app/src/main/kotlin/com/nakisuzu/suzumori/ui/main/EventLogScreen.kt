@@ -1,5 +1,6 @@
 package com.nakisuzu.suzumori.ui.main
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -41,14 +42,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.core.guard.Trigger
 import com.nakisuzu.suzumori.core.log.EventEntry
+import com.nakisuzu.suzumori.core.log.EventLevel
 import com.nakisuzu.suzumori.core.log.ExitReasons
+import com.nakisuzu.suzumori.platform.Labels
 import com.nakisuzu.suzumori.platform.LogExporter
 import com.nakisuzu.suzumori.ui.components.Entrance
 import com.nakisuzu.suzumori.ui.components.Footnote
@@ -72,7 +78,7 @@ fun EventLogScreen(state: EventLogUiState, viewModel: EventLogViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val colors = SuzumoriTheme.colors
-    val rows = remember(state.events) { buildRows(state.events) }
+    val rows = remember(state.events, context) { buildRows(context, state.events) }
     // 進頁時前幾筆依序浮現；之後捲進畫面或新增的紀錄直接顯示。
     var introDone by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -82,23 +88,28 @@ fun EventLogScreen(state: EventLogUiState, viewModel: EventLogViewModel) {
 
     SuzumoriPage(verticalArrangement = Arrangement.Top) {
         item(key = "title") {
-            PageTitle("事件紀錄") {
+            val exportFailed = stringResource(R.string.log_export_failed)
+            PageTitle(stringResource(R.string.tab_log)) {
                 SquareIconButton(
                     icon = SzIcons.Share,
-                    contentDescription = "匯出",
+                    contentDescription = stringResource(R.string.log_export),
                     onClick = {
                         scope.launch {
-                            val uri = LogExporter.write(context.applicationContext, viewModel.exportText())
-                            LogExporter.share(context, uri)?.let { viewModel.showMessage("無法匯出", it) }
+                            val uri = LogExporter.write(context.applicationContext, viewModel.exportText(context))
+                            LogExporter.share(context, uri)?.let { viewModel.showMessage(exportFailed, it) }
                         }
                     },
                 )
-                SquareIconButton(icon = SzIcons.Trash, contentDescription = "清除", onClick = viewModel::requestClear)
+                SquareIconButton(
+                    icon = SzIcons.Trash,
+                    contentDescription = stringResource(R.string.log_clear),
+                    onClick = viewModel::requestClear,
+                )
             }
         }
         item(key = "count") {
             Text(
-                text = "最近 ${state.events.size} 筆・最多保留 2000 筆",
+                text = pluralStringResource(R.plurals.log_count, state.events.size, state.events.size),
                 modifier = Modifier.padding(start = 4.dp, top = 4.dp),
                 fontSize = 13.sp,
                 color = colors.onSurfaceMuted,
@@ -106,7 +117,7 @@ fun EventLogScreen(state: EventLogUiState, viewModel: EventLogViewModel) {
         }
         item(key = "hint") {
             Footnote(
-                text = "記錄每次偵測到的名單改寫、修補與廣播，用來觀察 PowerKeeper 與 Joyose 改寫名單的頻率和時間點。",
+                text = stringResource(R.string.log_hint),
                 modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
             )
         }
@@ -128,7 +139,7 @@ fun EventLogScreen(state: EventLogUiState, viewModel: EventLogViewModel) {
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                     )
                     Text(
-                        text = "尚無紀錄",
+                        text = stringResource(R.string.log_empty),
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
@@ -161,7 +172,7 @@ private data class DayRow(override val key: String, override val position: Int, 
 private data class EntryRow(override val key: String, override val position: Int, val entry: EventEntry, val last: Boolean) : LogRow
 
 /** [events] 新到舊，依日期分組並插入日期標題。 */
-private fun buildRows(events: List<EventEntry>): List<LogRow> {
+private fun buildRows(context: Context, events: List<EventEntry>): List<LogRow> {
     val rows = mutableListOf<LogRow>()
     var currentDay: LocalDate? = null
     fun markLast() {
@@ -173,7 +184,7 @@ private fun buildRows(events: List<EventEntry>): List<LogRow> {
         if (day != currentDay) {
             markLast()
             currentDay = day
-            val (label, detail) = TimeText.dayHeader(day)
+            val (label, detail) = TimeText.dayHeader(context, day)
             rows += DayRow("day-$day", rows.size, label, detail)
         }
         // 紀錄只會在結尾附加，從結尾算的序號在新增紀錄時保持不變，可以當作穩定的 key。
@@ -199,11 +210,19 @@ private fun DayHeader(row: DayRow) {
 @Composable
 private fun EventItem(entry: EventEntry, isLast: Boolean) {
     val colors = SuzumoriTheme.colors
+    val context = LocalContext.current
     var expanded by rememberSaveable { mutableStateOf(false) }
     val hasValues = entry.before != null || entry.after != null
-    val tone = resultColor(entry.result)
-    // 舊版的自我監測紀錄存的是系統英文說明，顯示時換成中文。
-    val result = if (entry.trigger == Trigger.SELF_MONITOR.label) ExitReasons.localizeResult(entry.result) else entry.result
+    val tone = levelColor(entry.level)
+    // 早期版本認得的結束原因較少，當時存下的是「原因：系統說明」；現在認得的說明換成文字。
+    val result = remember(entry, context) {
+        if (entry.trigger == Trigger.SELF_MONITOR.name) {
+            ExitReasons.parseResult(entry.result)?.let { Labels.exit(context, it) } ?: entry.result
+        } else {
+            entry.result
+        }
+    }
+    val trigger = remember(entry.trigger, context) { Labels.trigger(context, entry.trigger) }
     val rail = colors.divider
     val chevron by animateFloatAsState(if (expanded) 180f else 0f, tween(350, easing = Motion.Emphasized), label = "chevron")
 
@@ -256,7 +275,7 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
                         .padding(horizontal = 9.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(text = entry.trigger, fontSize = 11.sp, color = colors.onSurfaceMuted)
+                    Text(text = trigger, fontSize = 11.sp, color = colors.onSurfaceMuted)
                 }
             }
             Text(text = entry.action, fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurface)
@@ -280,8 +299,8 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            entry.before?.let { ValueBlock("修改前", it) }
-                            entry.after?.let { ValueBlock("修改後", it) }
+                            entry.before?.let { ValueBlock(stringResource(R.string.log_before), it) }
+                            entry.after?.let { ValueBlock(stringResource(R.string.log_after), it) }
                         }
                     }
                 }
@@ -291,7 +310,7 @@ private fun EventItem(entry: EventEntry, isLast: Boolean) {
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        text = if (expanded) "收合" else "顯示修改前後的值",
+                        text = stringResource(if (expanded) R.string.log_collapse else R.string.log_show_values),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.primary,
@@ -328,17 +347,17 @@ fun LogDialogs(state: EventLogUiState, viewModel: EventLogViewModel) {
             visible = state.dialogVisible,
             title = dialog.title,
             text = dialog.text,
-            confirmText = "確定",
+            confirmText = stringResource(R.string.ok),
             onConfirm = viewModel::dismissDialog,
             onDismiss = viewModel::dismissDialog,
             onDismissFinished = viewModel::clearDialog,
         )
         LogDialog.ConfirmClear -> SuzumoriDialog(
             visible = state.dialogVisible,
-            title = "清除事件紀錄",
-            text = "清除後無法復原。如果還要觀察名單的變化，建議先匯出。",
-            confirmText = "清除",
-            dismissText = "取消",
+            title = stringResource(R.string.log_clear_title),
+            text = stringResource(R.string.log_clear_text),
+            confirmText = stringResource(R.string.log_clear),
+            dismissText = stringResource(R.string.cancel),
             onConfirm = viewModel::confirmClear,
             onDismiss = viewModel::dismissDialog,
             onDismissFinished = viewModel::clearDialog,
@@ -347,12 +366,11 @@ fun LogDialogs(state: EventLogUiState, viewModel: EventLogViewModel) {
 }
 
 @Composable
-private fun resultColor(result: String): Color {
+private fun levelColor(level: EventLevel): Color {
     val colors = SuzumoriTheme.colors
-    return when {
-        result.startsWith("例外") || result.startsWith("驗證失敗") || result.contains("暫停") || result.startsWith("沒有「修改系統設定」") ->
-            colors.warn
-        result == "成功" -> colors.good
-        else -> colors.onSurfaceMuted
+    return when (level) {
+        EventLevel.WARNING -> colors.warn
+        EventLevel.SUCCESS -> colors.good
+        EventLevel.INFO -> colors.onSurfaceMuted
     }
 }
