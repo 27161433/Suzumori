@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -180,6 +181,20 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+        absorbAutoFocus()
+    }
+
+    /**
+     * targetSdk 低於 28 時，App 開啟或焦點被清掉（例如按鍵盤的搜尋鍵）後，系統一定會把焦點交給某個 View。
+     * 交給 Compose 的話，Compose 會再自動交給第一個可聚焦的元件，例如別的分頁上的搜尋欄或可選取的文字，
+     * 結果分頁被捲過去、鍵盤跳出來。讓最外層的容器自己接下這個焦點，Compose 只在使用者點了某個元件時才取得焦點。
+     */
+    private fun absorbAutoFocus() {
+        findViewById<ViewGroup>(android.R.id.content).apply {
+            isFocusableInTouchMode = true
+            descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+            defaultFocusHighlightEnabled = false
         }
     }
 

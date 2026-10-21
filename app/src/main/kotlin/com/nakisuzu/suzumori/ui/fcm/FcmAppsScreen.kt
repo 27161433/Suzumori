@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -80,7 +81,6 @@ import top.yukonga.miuix.kmp.basic.TextFieldDefaults
 fun FcmAppsScreen(active: Boolean, openPage: ((Context) -> String?) -> Unit) {
     val colors = SuzumoriTheme.colors
     val context = LocalContext.current
-    val focusManager = LocalFocusManager.current
     var apps by remember { mutableStateOf<List<FcmAppStatus>?>(null) }
     var scanning by remember { mutableStateOf(false) }
     var refresh by remember { mutableIntStateOf(0) }
@@ -94,11 +94,7 @@ fun FcmAppsScreen(active: Boolean, openPage: ((Context) -> String?) -> Unit) {
     // 剛開 App 時的 ON_RESUME 還沒讀過，交給下面切到這一頁時的讀取，避免同時讀兩次。
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { if (active && apps != null) refresh++ }
     LaunchedEffect(active, refresh) {
-        if (!active) {
-            // 切走時收起鍵盤，不然會留在別的分頁上。
-            focusManager.clearFocus()
-            return@LaunchedEffect
-        }
+        if (!active) return@LaunchedEffect
         scanning = true
         try {
             apps = FcmAppScanner.scan(context)
@@ -134,7 +130,7 @@ fun FcmAppsScreen(active: Boolean, openPage: ((Context) -> String?) -> Unit) {
                 Text(text = stringResource(R.string.fcm_apps_dnd_hint), fontSize = 13.sp, lineHeight = 20.sp, color = colors.onPrimaryContainer)
             }
         }
-        item(key = "search") { SearchField(query = query, onQueryChange = { query = it }) }
+        item(key = "search") { SearchField(query = query, onQueryChange = { query = it }, active = active) }
         item(key = "sort") {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
@@ -197,15 +193,28 @@ private fun sortLabel(sort: FcmAppSort) = when (sort) {
     FcmAppSort.NO_RESTRICTIONS -> R.string.fcm_apps_sort_power
 }
 
-/** 搜尋欄：比對 App 名稱與套件名稱，有輸入時右側出現清除按鈕。 */
+/**
+ * 搜尋欄：比對 App 名稱與套件名稱，有輸入時右側出現清除按鈕。
+ *
+ * 按鍵盤的搜尋鍵，或 [active] 變成 false（切到別的分頁）時收起鍵盤。
+ */
 @Composable
-private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+private fun SearchField(query: String, onQueryChange: (String) -> Unit, active: Boolean) {
     val colors = SuzumoriTheme.colors
     val focusManager = LocalFocusManager.current
+    var focused by remember { mutableStateOf(false) }
+
+    fun release() {
+        if (focused) focusManager.clearFocus()
+    }
+    LaunchedEffect(active) { if (!active) release() }
+
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focused = it.hasFocus },
         colors = TextFieldDefaults.textFieldColors(
             backgroundColor = colors.surface,
             labelColor = colors.onSurfaceMuted,
@@ -215,7 +224,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
         useLabelAsPlaceholder = true,
         textStyle = TextStyle(fontSize = 15.sp, color = colors.onSurface),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+        keyboardActions = KeyboardActions(onSearch = { release() }),
         leadingIcon = {
             Icon(
                 imageVector = SzIcons.Search,
