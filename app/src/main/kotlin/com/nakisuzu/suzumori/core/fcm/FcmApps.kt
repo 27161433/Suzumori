@@ -3,11 +3,39 @@ package com.nakisuzu.suzumori.core.fcm
 import com.nakisuzu.suzumori.core.Packages
 
 /**
- * 「FCM App 檢查」的判斷規則：哪些 App 要列出來，以及系統回報的狀態代表什麼。
+ * 「FCM App 檢查」的判斷規則：哪些 App 要列出來、系統回報的狀態代表什麼，以及搜尋與排序。
  *
  * 只做判斷，不讀取也不修改任何設定；讀取在 `platform/FcmAppScanner`。
  */
 object FcmApps {
+    /**
+     * 依 [query] 篩選並依 [sort] 排序。
+     *
+     * 搜尋不分大小寫，比對 App 名稱與套件名稱，前後空白會忽略；空字串時列出全部。
+     * 依自啟動或省電策略排序時，「已開啟／無限制」在前、「未開啟」其次、「無法判斷」最後，同一組內依名稱。
+     */
+    fun <T : FcmAppEntry> arrange(apps: List<T>, query: String, sort: FcmAppSort, labelOrder: Comparator<in String>): List<T> {
+        val keyword = query.trim()
+        val matched = if (keyword.isEmpty()) {
+            apps
+        } else {
+            apps.filter { it.label.contains(keyword, ignoreCase = true) || it.packageName.contains(keyword, ignoreCase = true) }
+        }
+        val byName = compareBy(labelOrder) { app: T -> app.label }
+        val order = when (sort) {
+            FcmAppSort.NAME -> byName
+            FcmAppSort.AUTO_START -> compareBy<T> { rank(it.autoStart) }.then(byName)
+            FcmAppSort.NO_RESTRICTIONS -> compareBy<T> { rank(it.noRestrictions) }.then(byName)
+        }
+        return matched.sortedWith(order)
+    }
+
+    private fun rank(state: PermissionState) = when (state) {
+        PermissionState.ALLOWED -> 0
+        PermissionState.DENIED -> 1
+        PermissionState.UNKNOWN -> 2
+    }
+
     /** Play 商店：本身就靠 GMS 運作，不需要使用者調整。 */
     const val PLAY_STORE = "com.android.vending"
 
@@ -51,6 +79,24 @@ data class FcmAppCandidate(
     /** 有桌面啟動器入口；沒有入口的多半是系統元件或外掛，使用者也無從調整。 */
     val hasLauncher: Boolean,
 )
+
+/** 檢查頁上的一個 App：搜尋與排序需要的欄位。 */
+interface FcmAppEntry {
+    val packageName: String
+    val label: String
+    val autoStart: PermissionState
+    val noRestrictions: PermissionState
+}
+
+enum class FcmAppSort {
+    NAME,
+
+    /** 自啟動已開啟的在前。 */
+    AUTO_START,
+
+    /** 省電策略是「無限制」的在前。 */
+    NO_RESTRICTIONS,
+}
 
 enum class PermissionState {
     ALLOWED,

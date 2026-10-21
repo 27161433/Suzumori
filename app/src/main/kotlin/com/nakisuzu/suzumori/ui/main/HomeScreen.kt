@@ -74,7 +74,6 @@ import com.nakisuzu.suzumori.ui.components.SquareIconButton
 import com.nakisuzu.suzumori.ui.components.StatusChip
 import com.nakisuzu.suzumori.ui.components.SuzumoriPage
 import com.nakisuzu.suzumori.ui.components.SzIcons
-import com.nakisuzu.suzumori.ui.fcm.FcmAppsEntry
 import com.nakisuzu.suzumori.ui.theme.SuzumoriTheme
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Icon
@@ -87,7 +86,7 @@ import java.time.LocalTime
  *
  * [playIntro] 為 true 時播放進場動畫（只在開啟 App 時播一次），播完呼叫 [onIntroShown]。
  * [openPage] 開啟系統設定頁，失敗時由呼叫端顯示訊息；[onOpenLog] 切到事件紀錄分頁。
- * GitHub 上有新版本時顯示更新卡片，點一下呼叫 [onOpenUpdate]。[onOpenFcmApps] 打開 FCM App 檢查頁。
+ * GitHub 上有新版本時顯示更新卡片，點一下呼叫 [onOpenUpdate]。
  */
 @Composable
 fun HomeScreen(
@@ -99,7 +98,6 @@ fun HomeScreen(
     onOpenLog: () -> Unit,
     update: UpdateState,
     onOpenUpdate: () -> Unit,
-    onOpenFcmApps: () -> Unit,
 ) {
     val now by rememberMinuteClock()
     LaunchedEffect(Unit) {
@@ -132,7 +130,6 @@ fun HomeScreen(
                 ActionSection(state = state, onCheck = viewModel::checkNow, onUnfreeze = viewModel::unfreezeNow)
             }
         }
-        item(key = "fcmApps") { Entrance(4, playIntro) { FcmAppsEntry(onClick = onOpenFcmApps) } }
     }
 }
 

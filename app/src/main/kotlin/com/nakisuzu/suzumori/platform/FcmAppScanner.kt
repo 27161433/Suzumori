@@ -8,21 +8,21 @@ import android.graphics.Bitmap
 import android.os.PowerManager
 import androidx.core.graphics.drawable.toBitmap
 import com.nakisuzu.suzumori.core.fcm.FcmAppCandidate
+import com.nakisuzu.suzumori.core.fcm.FcmAppEntry
 import com.nakisuzu.suzumori.core.fcm.FcmApps
 import com.nakisuzu.suzumori.core.fcm.PermissionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.Collator
 
 /** 一個使用 FCM 的 App，以及會影響它收推播的兩項設定。 */
 data class FcmAppStatus(
-    val packageName: String,
+    override val packageName: String,
     val uid: Int,
-    val label: String,
+    override val label: String,
     val icon: Bitmap?,
-    val autoStart: PermissionState,
-    val noRestrictions: PermissionState,
-) {
+    override val autoStart: PermissionState,
+    override val noRestrictions: PermissionState,
+) : FcmAppEntry {
     /** 有任一項明確沒開。 */
     val needsAttention: Boolean
         get() = autoStart == PermissionState.DENIED || noRestrictions == PermissionState.DENIED
@@ -51,12 +51,10 @@ object FcmAppScanner {
             FcmAppCandidate(it.packageName, enabled = it.enabled, hasLauncher = pm.getLaunchIntentForPackage(it.packageName) != null)
         }
         val power = context.getSystemService(PowerManager::class.java)
-        val collator = Collator.getInstance(context.resources.configuration.locales[0])
+        // 排序與搜尋由畫面依使用者的選擇處理（FcmApps.arrange）。
         FcmApps.filter(candidates, context.packageName)
             .mapNotNull { apps[it] }
             .map { app -> status(context, pm, power, app) }
-            // 依名稱排序：這一頁是用來找「某個推播延遲的 App」，多數 App 本來就不需要調整，不把它們排到前面。
-            .sortedWith(compareBy(collator) { it.label })
     }
 
     private fun status(context: Context, pm: PackageManager, power: PowerManager, app: ApplicationInfo): FcmAppStatus {

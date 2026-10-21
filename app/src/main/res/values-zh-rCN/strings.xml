@@ -16,6 +16,7 @@
     <!-- 导航栏 -->
     <string name="tab_home">首页</string>
     <string name="tab_log">事件记录</string>
+    <string name="tab_apps">App 检查</string>
     <string name="tab_settings">设置</string>
     <string name="tab_about">关于</string>
 
@@ -319,13 +320,19 @@
 
     <!-- FCM App 检查 -->
     <string name="fcm_apps_title">FCM App 检查</string>
-    <string name="fcm_apps_entry_summary">某个 App 推送延迟时，检查它的自启动与省电策略</string>
     <string name="fcm_apps_intro">只有在 GMS 正常、但某个 App 的推送仍然延迟时，才需要调整那个 App。不建议把所有 App 都改成“无限制”。</string>
     <string name="fcm_apps_privacy">只在你打开这一页或刷新时读取，不会修改任何设置，也不会写进事件记录。</string>
     <string name="fcm_apps_dnd_hint">通知准时送达却没有声音时，请检查勿扰模式有没有拦下这个 App。</string>
     <string name="fcm_apps_scanning">正在读取…</string>
     <string name="fcm_apps_empty">找不到使用 FCM 的 App</string>
     <string name="fcm_apps_refresh">刷新</string>
+    <string name="fcm_apps_search">搜索 App 名称或包名</string>
+    <string name="fcm_apps_clear_search">清除搜索</string>
+    <string name="fcm_apps_sort">排序</string>
+    <string name="fcm_apps_sort_name">名称</string>
+    <string name="fcm_apps_sort_autostart">自启动</string>
+    <string name="fcm_apps_sort_power">省电策略</string>
+    <string name="fcm_apps_no_match">没有符合“%s”的 App</string>
     <string name="status_undetermined">无法判断</string>
     <string name="fcm_diagnostics_not_found">找不到 GMS 的 FCM 诊断页面</string>
     <plurals name="fcm_apps_found">
@@ -333,5 +340,8 @@
     </plurals>
     <plurals name="fcm_apps_attention">
         <item quantity="other">其中 %d 个有设置没开</item>
+    </plurals>
+    <plurals name="fcm_apps_matching">
+        <item quantity="other">符合 %d 个</item>
     </plurals>
 </resources>

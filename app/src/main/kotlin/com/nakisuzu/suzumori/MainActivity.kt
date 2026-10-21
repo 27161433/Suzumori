@@ -65,9 +65,6 @@ class MainActivity : ComponentActivity() {
     /** 更新頁是否開著。從更新通知開啟 App 時直接打開。 */
     private var showUpdate by mutableStateOf(false)
 
-    /** FCM App 檢查頁是否開著。 */
-    private var showFcmApps by mutableStateOf(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         // targetSdk 22 不會自動套用 edge-to-edge，要自己開啟並在 Compose 端處理 insets。
         enableEdgeToEdge()
@@ -90,6 +87,7 @@ class MainActivity : ComponentActivity() {
                 val pages = listOf(
                     NavigationItem(stringResource(R.string.tab_home), SzIcons.Home),
                     NavigationItem(stringResource(R.string.tab_log), SzIcons.List),
+                    NavigationItem(stringResource(R.string.tab_apps), SzIcons.Apps),
                     NavigationItem(stringResource(R.string.tab_settings), SzIcons.Sliders),
                     NavigationItem(stringResource(R.string.tab_about), SzIcons.Info),
                 )
@@ -110,8 +108,7 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = pagerState.currentPage != 0) {
                     scope.launch { pagerState.animateScrollToPage(0) }
                 }
-                // 子頁面開著時，返回先關閉子頁面（後宣告的優先）。
-                BackHandler(enabled = showFcmApps) { showFcmApps = false }
+                // 更新頁開著時，返回先關閉更新頁（後宣告的優先）。
                 BackHandler(enabled = showUpdate) { showUpdate = false }
 
                 // miuix 的對話框（OverlayDialog）要靠 Scaffold 提供的圖層才顯示得出來，所以最外層一定要包 Scaffold。
@@ -127,7 +124,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .layerBackdrop(pageBackdrop),
-                            // 四頁都保留，切換時捲動位置與狀態不會重置。
+                            // 每一頁都保留，切換時捲動位置與狀態不會重置。
                             beyondViewportPageCount = PAGE_COUNT - 1,
                         ) { page ->
                             when (page) {
@@ -140,10 +137,11 @@ class MainActivity : ComponentActivity() {
                                     onOpenLog = { scope.launch { pagerState.animateScrollToPage(1) } },
                                     update = updateState,
                                     onOpenUpdate = { showUpdate = true },
-                                    onOpenFcmApps = { showFcmApps = true },
                                 )
                                 1 -> EventLogScreen(logState, logViewModel)
-                                2 -> SettingsScreen(
+                                // 只有停在這一頁時才讀取 App 清單；滑動經過不算。
+                                2 -> FcmAppsScreen(active = pagerState.settledPage == 2, openPage = ::openPage)
+                                3 -> SettingsScreen(
                                     state = settingsState,
                                     viewModel = settingsViewModel,
                                     cleaning = state.busyAction == BusyAction.CLEANUP,
@@ -163,14 +161,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.align(Alignment.BottomCenter),
                         )
 
-                        // 子頁面從右側滑入，蓋過分頁與導覽列。
-                        AnimatedVisibility(
-                            visible = showFcmApps,
-                            enter = slideInHorizontally(tween(450, easing = Motion.Emphasized)) { it / 3 } + fadeIn(tween(300)),
-                            exit = slideOutHorizontally(tween(350, easing = Motion.Emphasized)) { it / 3 } + fadeOut(tween(200)),
-                        ) {
-                            FcmAppsScreen(onBack = { showFcmApps = false }, openPage = ::openPage)
-                        }
+                        // 更新頁從右側滑入，蓋過分頁與導覽列。
                         AnimatedVisibility(
                             visible = showUpdate,
                             enter = slideInHorizontally(tween(450, easing = Motion.Emphasized)) { it / 3 } + fadeIn(tween(300)),
@@ -216,7 +207,7 @@ class MainActivity : ComponentActivity() {
         /** 更新通知帶的 extra：開啟後直接打開更新頁。 */
         const val EXTRA_OPEN_UPDATE = "com.nakisuzu.suzumori.extra.OPEN_UPDATE"
 
-        /** 首頁、事件紀錄、設定、關於。 */
-        private const val PAGE_COUNT = 4
+        /** 首頁、事件紀錄、App 檢查、設定、關於。 */
+        private const val PAGE_COUNT = 5
     }
 }

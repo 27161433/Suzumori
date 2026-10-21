@@ -40,7 +40,7 @@ Global HyperOS builds don't have this freezing mechanism and don't need Suzumori
 - **Self-monitoring**: records whether Suzumori was frozen, why its process was killed, and whether it restarted afterwards.
 - **Permission prompts**: if write permission, battery saver or autostart isn't set up, the home page says so and opens the right system page in one tap.
 - **Interface**: 繁體中文, 简体中文 and English, plus light and dark themes, all switchable in Settings. The persistent notification can use the default style, a pinned position (top or bottom) or a foldable style.
-- **FCM apps check**: lists the apps on the phone that use FCM, with their autostart and battery saver settings, and opens an app's settings page in one tap. Use it to find out why one app's notifications are late. It only reads, never changes anything.
+- **FCM apps check**: a separate Apps tab that lists the apps on the phone that use FCM, with their autostart and battery saver settings. You can search by app or package name, sort by autostart or battery saver, and open an app's settings page in one tap. Use it to find out why one app's notifications are late. It only reads, never changes anything.
 - **Update check**: asks GitHub for a new version when the app opens and once a day, and notifies you when one is out. The notification opens the release notes and download link. You can turn it off in Settings.
 - **Pre-uninstall cleanup**: removes only the entries Suzumori added.
 
@@ -202,7 +202,7 @@ When reporting a problem, please attach the log exported from the top right of t
 
 - The only permissions are `INTERNET`, `WRITE_SETTINGS`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `POST_NOTIFICATIONS`.
 - The network is only used to ask GitHub (`api.github.com`) for a new version, and no personal data is sent. If you turn off "Check for updates automatically" in Settings, Suzumori only connects when you tap "Check again" on the update page.
-- The FCM apps check reads installed apps' settings on the phone only when you open that page or refresh it. Nothing is uploaded, changed or written to the event log, and it needs no extra permission.
+- The FCM apps check reads installed apps' settings on the phone only when you switch to that tab or refresh it. Nothing is uploaded, changed or written to the event log, and it needs no extra permission.
 - There's no analytics, tracking or crash-reporting SDK. All records stay on the phone and only leave it when you export them.
 
 ## Building

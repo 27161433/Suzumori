@@ -55,6 +55,9 @@ object SzIcons {
     val Code by lazy { stroke("M8 7l-5 5 5 5", "M16 7l5 5-5 5", "M13.5 4l-3 16") }
     val Document by lazy { stroke("M6 3h8l4 4v14H6z", "M14 3v4h4", "M9 12h6M9 16h6") }
     val Download by lazy { stroke("M12 3v12", "M7 10l5 5 5-5", "M5 21h14") }
+    val Apps by lazy { stroke(tile(4, 4), tile(14, 4), tile(4, 14), tile(14, 14)) }
+    val Search by lazy { stroke("M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0", "M20 20l-4-4") }
+    val Close by lazy { stroke("M6 6l12 12M18 6L6 18") }
     val Sliders by lazy {
         stroke(
             "M4 7h10M18 7h2M4 12h2M10 12h10M4 17h8M16 17h4",
@@ -66,6 +69,10 @@ object SzIcons {
 }
 
 private const val SHIELD = "M12 3l7 3v6c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6l7-3z"
+
+/** 左上角在 ([x], [y])、邊長 6 的圓角方塊。 */
+private fun tile(x: Int, y: Int) =
+    "M${x + 1.5} ${y}h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5z"
 
 private fun stroke(vararg paths: String): ImageVector =
     ImageVector.Builder(defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)

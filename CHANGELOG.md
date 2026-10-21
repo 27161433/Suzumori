@@ -10,7 +10,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 - 檢查更新：開啟 App 時與每天一次向 GitHub 查詢新版本。有新版本時首頁顯示提示，背景檢查到時發出通知，點開後顯示更新內容與下載連結。設定中可以關閉自動檢查。
 - 因此新增 `INTERNET` 權限，只用來連線到 `api.github.com`，不傳送任何個人資料。
-- FCM App 檢查：列出使用 FCM 的 App 與它們的自啟動、省電策略，點一下開啟該 App 的設定頁。只在打開這一頁時讀取，不修改任何設定。
+- FCM App 檢查：新的「App 檢查」分頁，列出使用 FCM 的 App 與它們的自啟動、省電策略，可以搜尋名稱或套件名稱，並依名稱、自啟動或省電策略排序；點一下開啟該 App 的設定頁。只在切到這一頁時讀取，不修改任何設定。
 
 ### 變更
 
@@ -21,7 +21,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 - Update check: asks GitHub for a new version when the app opens and once a day. The home page shows a card when an update is out, and a background check posts a notification that opens the release notes and download link. Automatic checks can be turned off in Settings.
 - This adds the `INTERNET` permission, used only to reach `api.github.com`. No personal data is sent.
-- FCM apps check: lists the apps that use FCM with their autostart and battery saver settings, and opens an app's settings page in one tap. It reads only when you open the page and never changes anything.
+- FCM apps check: a new Apps tab that lists the apps that use FCM with their autostart and battery saver settings. Search by app or package name, sort by name, autostart or battery saver, and open an app's settings page in one tap. It reads only when you switch to the tab and never changes anything.
 
 ### Changed
 
