@@ -83,6 +83,8 @@ class MainActivity : ComponentActivity() {
                 val logState by logViewModel.state.collectAsStateWithLifecycle()
                 val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
                 val updateState by container.updates.state.collectAsStateWithLifecycle()
+                // 讀到之前先不顯示，避免已經關掉的說明閃一下。
+                val showFcmAppsIntro by container.hints.showFcmAppsIntro.collectAsStateWithLifecycle(initialValue = false)
                 var introShown by rememberSaveable { mutableStateOf(false) }
                 val pagerState = rememberPagerState { PAGE_COUNT }
                 val pages = listOf(
@@ -141,7 +143,12 @@ class MainActivity : ComponentActivity() {
                                 )
                                 1 -> EventLogScreen(logState, logViewModel)
                                 // 只有停在這一頁時才讀取 App 清單；滑動經過不算。
-                                2 -> FcmAppsScreen(active = pagerState.settledPage == 2, openPage = ::openPage)
+                                2 -> FcmAppsScreen(
+                                    active = pagerState.settledPage == 2,
+                                    showIntro = showFcmAppsIntro,
+                                    onDismissIntro = { container.appScope.launch { container.hints.dismissFcmAppsIntro() } },
+                                    openPage = ::openPage,
+                                )
                                 3 -> SettingsScreen(
                                     state = settingsState,
                                     viewModel = settingsViewModel,

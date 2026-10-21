@@ -18,6 +18,7 @@ import com.nakisuzu.suzumori.platform.DataStoreGuardStateStore
 import com.nakisuzu.suzumori.platform.DeviceStorage
 import com.nakisuzu.suzumori.platform.GuardActions
 import com.nakisuzu.suzumori.platform.GuardScheduler
+import com.nakisuzu.suzumori.platform.HintStore
 import com.nakisuzu.suzumori.platform.SelfMonitor
 import com.nakisuzu.suzumori.platform.SystemSettingsStore
 import com.nakisuzu.suzumori.platform.Updates
@@ -46,6 +47,7 @@ class AppContainer(context: Context) {
     val eventLog: EventLog = FileEventLog(DeviceStorage.eventLogFile(storage))
     val appearance = AppearanceStore(appContext, DeviceStorage.dataStore(storage, "appearance"))
     val updates = Updates(appContext, DeviceStorage.dataStore(storage, "update"), appScope)
+    val hints = HintStore(DeviceStorage.dataStore(storage, "hints"))
 
     init {
         DeviceStorage.migrateLegacyDataStore(appContext, storage, BASELINE)

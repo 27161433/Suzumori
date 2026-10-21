@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -76,9 +77,15 @@ import top.yukonga.miuix.kmp.basic.TextFieldDefaults
  * 分頁一直組成著，只在停在這一頁（[active]）時讀取：切到這一頁、按重新整理，或從系統設定頁返回（ON_RESUME）。
  * 不在背景執行，也不寫進事件紀錄。可以搜尋名稱或套件名稱，並依名稱、自啟動或省電策略排序。
  * 點 App 開啟它的應用詳情頁，點「省電策略」直接開啟它的省電策略頁。
+ * 上方的說明在 [showIntro] 為 true 時顯示，按右上角的關閉鈕呼叫 [onDismissIntro]。
  */
 @Composable
-fun FcmAppsScreen(active: Boolean, openPage: ((Context) -> String?) -> Unit) {
+fun FcmAppsScreen(
+    active: Boolean,
+    showIntro: Boolean,
+    onDismissIntro: () -> Unit,
+    openPage: ((Context) -> String?) -> Unit,
+) {
     val colors = SuzumoriTheme.colors
     val context = LocalContext.current
     var apps by remember { mutableStateOf<List<FcmAppStatus>?>(null) }
@@ -113,22 +120,8 @@ fun FcmAppsScreen(active: Boolean, openPage: ((Context) -> String?) -> Unit) {
                 )
             }
         }
-        item(key = "intro") {
-            Panel(
-                modifier = Modifier.fillMaxWidth(),
-                color = colors.primaryContainer,
-                contentPadding = PaddingValues(18.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.fcm_apps_intro),
-                    fontSize = 14.sp,
-                    lineHeight = 21.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.onPrimaryContainer,
-                )
-                Text(text = stringResource(R.string.fcm_apps_dnd_hint), fontSize = 13.sp, lineHeight = 20.sp, color = colors.onPrimaryContainer)
-            }
+        if (showIntro) {
+            item(key = "intro") { Intro(onDismiss = onDismissIntro, modifier = Modifier.animateItem()) }
         }
         item(key = "search") { SearchField(query = query, onQueryChange = { query = it }, active = active) }
         item(key = "sort") {
@@ -184,6 +177,46 @@ fun FcmAppsScreen(active: Boolean, openPage: ((Context) -> String?) -> Unit) {
             )
         }
         item(key = "privacy") { Footnote(stringResource(R.string.fcm_apps_privacy), Modifier.padding(top = 8.dp)) }
+    }
+}
+
+/** 頁面上方的說明，右上角可以關閉。 */
+@Composable
+private fun Intro(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = SuzumoriTheme.colors
+    Panel(
+        modifier = modifier.fillMaxWidth(),
+        color = colors.primaryContainer,
+        contentPadding = PaddingValues(start = 18.dp, top = 18.dp, end = 8.dp, bottom = 18.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Text(
+                text = stringResource(R.string.fcm_apps_intro),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 4.dp),
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.onPrimaryContainer,
+            )
+            // 往上移一點，讓按鈕中心對齊第一行文字。
+            Box(
+                modifier = Modifier
+                    .offset(y = (-8).dp)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = SzIcons.Close,
+                    contentDescription = stringResource(R.string.fcm_apps_intro_dismiss),
+                    modifier = Modifier.size(18.dp),
+                    tint = colors.onPrimaryContainer,
+                )
+            }
+        }
     }
 }
 

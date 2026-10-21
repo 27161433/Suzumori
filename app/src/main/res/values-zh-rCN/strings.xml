@@ -320,9 +320,9 @@
 
     <!-- FCM App 检查 -->
     <string name="fcm_apps_title">FCM App 检查</string>
-    <string name="fcm_apps_intro">要接收推送的 App 必须同时开启“自启动”，并把省电策略设为“无限制”；实测只要少一项就收不到通知。不需要通知的 App 不用调整。</string>
+    <string name="fcm_apps_intro">要接收推送的 App 必须同时开启“自启动”，并把省电策略设为“无限制”。不需要通知的 App 不用调整。</string>
+    <string name="fcm_apps_intro_dismiss">关闭说明</string>
     <string name="fcm_apps_privacy">只在你打开这一页或刷新时读取，不会修改任何设置，也不会写进事件记录。</string>
-    <string name="fcm_apps_dnd_hint">通知准时送达却没有声音时，请检查勿扰模式有没有拦下这个 App。</string>
     <string name="fcm_apps_scanning">正在读取…</string>
     <string name="fcm_apps_empty">找不到使用 FCM 的 App</string>
     <string name="fcm_apps_refresh">刷新</string>

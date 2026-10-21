@@ -331,9 +331,9 @@
 
     <!-- FCM apps -->
     <string name="fcm_apps_title">FCM apps</string>
-    <string name="fcm_apps_intro">Apps you want notifications from need both autostart turned on and battery saver set to “No restrictions”. In testing, missing either one meant no notifications. Apps you don\'t need notifications from can stay as they are.</string>
+    <string name="fcm_apps_intro">Apps you want notifications from need both autostart turned on and battery saver set to “No restrictions”. Apps you don\'t need notifications from can stay as they are.</string>
+    <string name="fcm_apps_intro_dismiss">Dismiss</string>
     <string name="fcm_apps_privacy">Read only when you open this page or refresh. Nothing is changed or written to the event log.</string>
-    <string name="fcm_apps_dnd_hint">If a notification arrives on time but makes no sound, check whether Do Not Disturb is blocking that app.</string>
     <string name="fcm_apps_scanning">Reading…</string>
     <string name="fcm_apps_empty">No apps using FCM found</string>
     <string name="fcm_apps_refresh">Refresh</string>
