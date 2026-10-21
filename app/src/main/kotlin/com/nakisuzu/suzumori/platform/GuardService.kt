@@ -24,10 +24,12 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 /**
- * 常駐的前景服務：監聽兩個名單 key 與螢幕開關，有變化就立即檢查。
+ * 常駐服務：監聽兩個名單 key 與螢幕開關，有變化就立即檢查。自動守護開啟時一律執行。
  *
- * 沒有前景服務時，App 在背景會被系統暫停，observer 事件會延後送達（實測延後約 10 秒），
- * 而最短的延遲凍結只有約 5 秒，所以必須常駐。不持有 wake lock，也不使用精確鬧鐘。
+ * 「常駐通知」只決定這個服務是前景服務（顯示通知）還是一般的背景服務，不影響有沒有監聽。
+ * 沒有任何服務時，App 在背景會被系統暫停，observer 事件會延後送達（實測延後約 10 秒），
+ * 而最短的延遲凍結只有約 5 秒，所以一定要有服務常駐。前景服務比一般服務更不容易被系統暫停或結束。
+ * 不持有 wake lock，也不使用精確鬧鐘。
  */
 class GuardService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -35,6 +37,9 @@ class GuardService : Service() {
 
     /** 目前顯示中的通知（已套用使用者選的樣式與最近修補）。重新進入前景時沿用它。 */
     private var notification: Notification? = null
+
+    /** 目前是不是前景服務（有顯示常駐通知）。 */
+    private var foreground = false
 
     /** 語言或其他設定改變時加一，讓通知用新的語言重建。 */
     private val configChanges = MutableStateFlow(0)
@@ -51,26 +56,40 @@ class GuardService : Service() {
     override fun onCreate() {
         super.onCreate()
         Diag.i("GuardService onCreate")
-        startGuarding()
+        startWatching()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // intent 為 null 代表程序被殺後由系統依 START_STICKY 重新啟動。
         Diag.i("GuardService onStartCommand startId=$startId stickyRestart=${intent == null} watching=${watching != null}")
-        startGuarding()
+        // GuardScheduler 啟動時會帶上要不要進入前景；以 startForegroundService 啟動的必須馬上進入前景。
+        // 系統重新啟動（intent 為 null）或只重建服務時沒有這個資訊，交給 watch() 裡的設定監聽決定，
+        // 避免關閉常駐通知時還閃一下通知。
+        if (intent?.hasExtra(EXTRA_FOREGROUND) == true) setForeground(intent.getBooleanExtra(EXTRA_FOREGROUND, true))
+        startWatching()
         return START_STICKY
     }
 
-    /**
-     * 進入前景並開始監聽；可以重複呼叫。
-     *
-     * onCreate 之後通常緊接著 onStartCommand。如果這時設定已經讀好、通知已更新成使用者選的樣式，
-     * 重新進入前景要沿用那則通知；用預設樣式會把它蓋掉，而設定沒有變化，之後也不會再更新回來。
-     */
-    private fun startGuarding() {
-        GuardNotifications.ensureChannel(this)
-        startForeground(GuardNotifications.ID, notification ?: GuardNotifications.build(this, null))
+    /** 開始監聽；可以重複呼叫。 */
+    private fun startWatching() {
         if (watching == null) watching = scope.launch { watch() }
+    }
+
+    /**
+     * 切換前景服務（顯示常駐通知）或一般服務，監聽不受影響；可以重複呼叫。
+     *
+     * 進入前景時沿用已經更新成使用者所選樣式的通知；用預設樣式會把它蓋掉，
+     * 而設定沒有變化，之後也不會再更新回來。
+     */
+    private fun setForeground(enabled: Boolean) {
+        if (enabled) {
+            GuardNotifications.ensureChannel(this)
+            startForeground(GuardNotifications.ID, notification ?: GuardNotifications.build(this, null))
+        } else if (foreground) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
+        if (foreground != enabled) Diag.i("GuardService foreground=$enabled")
+        foreground = enabled
     }
 
     @OptIn(FlowPreview::class)
@@ -101,13 +120,16 @@ class GuardService : Service() {
                 container.appearance.notificationPosition,
                 configChanges,
             ) { lastPatch, style, position, _ -> Triple(lastPatch, style, position) }.collect { (lastPatch, style, position) ->
-                Diag.i("notification update style=$style position=$position")
-                notification = GuardNotifications.update(this@GuardService, lastPatch, style, position)
+                // 不是前景服務時只準備好通知內容，不顯示；之後開啟常駐通知時直接沿用。
+                Diag.i("notification update style=$style position=$position foreground=$foreground")
+                notification = GuardNotifications.build(this@GuardService, lastPatch, style, position).also {
+                    if (foreground) GuardNotifications.post(this@GuardService, it)
+                }
             }
         }
         launch {
             container.configs.config.collect { config ->
-                if (!config.autoGuard || !config.persistentNotification) stopSelf()
+                if (config.autoGuard) setForeground(config.persistentNotification) else stopSelf()
             }
         }
         launch { ensure(Trigger.SERVICE_START) }
@@ -139,7 +161,10 @@ class GuardService : Service() {
         super.onDestroy()
     }
 
-    private companion object {
-        const val OBSERVER_DEBOUNCE_MILLIS = 300L
+    companion object {
+        /** 啟動服務時帶的 extra：是否進入前景（顯示常駐通知）。 */
+        const val EXTRA_FOREGROUND = "com.nakisuzu.suzumori.extra.FOREGROUND"
+
+        private const val OBSERVER_DEBOUNCE_MILLIS = 300L
     }
 }

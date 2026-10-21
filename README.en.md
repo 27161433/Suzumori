@@ -40,6 +40,7 @@ Global HyperOS builds don't have this freezing mechanism and don't need Suzumori
 - **Self-monitoring**: records whether Suzumori was frozen, why its process was killed, and whether it restarted afterwards.
 - **Permission prompts**: if write permission, battery saver or autostart isn't set up, the home page says so and opens the right system page in one tap.
 - **Interface**: 繁體中文, 简体中文 and English, plus light and dark themes, all switchable in Settings. The persistent notification can use the default style, a pinned position (top or bottom) or a foldable style.
+- **FCM apps check**: lists the apps on the phone that use FCM, with their autostart and battery saver settings, and opens an app's settings page in one tap. Use it to find out why one app's notifications are late. It only reads, never changes anything.
 - **Update check**: asks GitHub for a new version when the app opens and once a day, and notifies you when one is out. The notification opens the release notes and download link. You can turn it off in Settings.
 - **Pre-uninstall cleanup**: removes only the entries Suzumori added.
 
@@ -92,7 +93,7 @@ The About page shows all three settings at any time; tap one to open its system 
 | Settings | Persistent notification style | Default | Pinned: stays at the top or bottom of the notification shade. Foldable: long-press to fold it into "More notifications" |
 | Settings | Night guard | On | Keeps GMS in the game allowlist. Turning it off removes only the entries Suzumori added |
 | Settings | Add this app to the game allowlist too | On | At night the "No restrictions" list stops working, so Suzumori can be frozen too, and Joyose may clear the game allowlist overnight. A frozen Suzumori can't restore the lists |
-| Settings | Persistent notification | On | Runs as a foreground service. Without it, list changes reached Suzumori about 10 seconds late in testing |
+| Settings | Persistent notification | On | Shows a persistent notification and runs as a foreground service. When off, Suzumori still watches the lists in the background, but the system pauses services without a notification more readily, so it may react more slowly |
 | Settings | Check for updates automatically | On | Asks GitHub for a new version when the app opens and once a day, and notifies you when one is out |
 
 ## How it works
@@ -136,7 +137,7 @@ A normal app can't guarantee it will never be frozen; the system decides. Suzumo
 |---|---|
 | Greezer's background freezing | Suzumori keeps itself in the MILLET list too (even if Xiaomi revokes "No restrictions") |
 | HyperOS 4 night freezing | Suzumori adds itself to the game allowlist |
-| Android freezing cached background processes | The foreground service keeps the process out of the cached state |
+| Android freezing cached background processes | The always-running service keeps the process out of the cached state; with the persistent notification on it's a foreground service, which is even less likely to be paused |
 | The process gets killed | Autostart, automatic service restart and the 15-minute fallback check |
 | Swiped away from recents | In testing, HyperOS kills the process but recreates the service within about 1 second, so guarding resumes |
 
@@ -159,6 +160,7 @@ When a normal app writes a non-public `Settings.System` key, targetSdk 23 and ab
 - Only the main user is protected. The system only reads the main user's settings, and the unfreeze broadcast only works for the main user, so Second Space isn't covered.
 - Suzumori can't disable Greezer's GMS limiter (that needs the DUMP permission), and can't change other apps' autostart or battery saver settings for you.
 - Package names containing underscores can't go into the game allowlist.
+- The FCM apps check can only see autostart and the battery saver. An app's own notification settings, Do Not Disturb and so on are out of scope. Autostart is read through an undocumented Xiaomi code and shows "Unknown" when it can't be read.
 
 ## Clean up before uninstalling
 
@@ -200,6 +202,7 @@ When reporting a problem, please attach the log exported from the top right of t
 
 - The only permissions are `INTERNET`, `WRITE_SETTINGS`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `POST_NOTIFICATIONS`.
 - The network is only used to ask GitHub (`api.github.com`) for a new version, and no personal data is sent. If you turn off "Check for updates automatically" in Settings, Suzumori only connects when you tap "Check again" on the update page.
+- The FCM apps check reads installed apps' settings on the phone only when you open that page or refresh it. Nothing is uploaded, changed or written to the event log, and it needs no extra permission.
 - There's no analytics, tracking or crash-reporting SDK. All records stay on the phone and only leave it when you export them.
 
 ## Building

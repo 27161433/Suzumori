@@ -36,6 +36,7 @@ import com.nakisuzu.suzumori.platform.SystemPages
 import com.nakisuzu.suzumori.ui.about.AboutScreen
 import com.nakisuzu.suzumori.ui.components.SzIcons
 import com.nakisuzu.suzumori.ui.components.glass.LiquidGlassNavigationBar
+import com.nakisuzu.suzumori.ui.fcm.FcmAppsScreen
 import com.nakisuzu.suzumori.ui.main.BusyAction
 import com.nakisuzu.suzumori.ui.main.EventLogScreen
 import com.nakisuzu.suzumori.ui.main.EventLogViewModel
@@ -63,6 +64,9 @@ class MainActivity : ComponentActivity() {
 
     /** 更新頁是否開著。從更新通知開啟 App 時直接打開。 */
     private var showUpdate by mutableStateOf(false)
+
+    /** FCM App 檢查頁是否開著。 */
+    private var showFcmApps by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // targetSdk 22 不會自動套用 edge-to-edge，要自己開啟並在 Compose 端處理 insets。
@@ -106,7 +110,8 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = pagerState.currentPage != 0) {
                     scope.launch { pagerState.animateScrollToPage(0) }
                 }
-                // 更新頁開著時，返回先關閉更新頁（後宣告的優先）。
+                // 子頁面開著時，返回先關閉子頁面（後宣告的優先）。
+                BackHandler(enabled = showFcmApps) { showFcmApps = false }
                 BackHandler(enabled = showUpdate) { showUpdate = false }
 
                 // miuix 的對話框（OverlayDialog）要靠 Scaffold 提供的圖層才顯示得出來，所以最外層一定要包 Scaffold。
@@ -135,6 +140,7 @@ class MainActivity : ComponentActivity() {
                                     onOpenLog = { scope.launch { pagerState.animateScrollToPage(1) } },
                                     update = updateState,
                                     onOpenUpdate = { showUpdate = true },
+                                    onOpenFcmApps = { showFcmApps = true },
                                 )
                                 1 -> EventLogScreen(logState, logViewModel)
                                 2 -> SettingsScreen(
@@ -157,7 +163,14 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.align(Alignment.BottomCenter),
                         )
 
-                        // 更新頁從右側滑入，蓋過分頁與導覽列。
+                        // 子頁面從右側滑入，蓋過分頁與導覽列。
+                        AnimatedVisibility(
+                            visible = showFcmApps,
+                            enter = slideInHorizontally(tween(450, easing = Motion.Emphasized)) { it / 3 } + fadeIn(tween(300)),
+                            exit = slideOutHorizontally(tween(350, easing = Motion.Emphasized)) { it / 3 } + fadeOut(tween(200)),
+                        ) {
+                            FcmAppsScreen(onBack = { showFcmApps = false }, openPage = ::openPage)
+                        }
                         AnimatedVisibility(
                             visible = showUpdate,
                             enter = slideInHorizontally(tween(450, easing = Motion.Emphasized)) { it / 3 } + fadeIn(tween(300)),

@@ -92,11 +92,9 @@ object GuardNotifications {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime }
             .getOrDefault(0L)
 
-    /** 重建並更新常駐通知，回傳新的通知。 */
-    fun update(context: Context, lastPatch: ActionRecord?, style: NotificationStyle, position: NotificationPosition): Notification {
-        val notification = build(context, lastPatch, style, position)
+    /** 更新顯示中的常駐通知。只在服務是前景服務時呼叫，否則會多出一則沒有服務的通知。 */
+    fun post(context: Context, notification: Notification) {
         context.getSystemService(NotificationManager::class.java).notify(ID, notification)
-        return notification
     }
 
     /** 2100-01-01 00:00 UTC。通知設定為不顯示時間，這個值只用來排序。 */

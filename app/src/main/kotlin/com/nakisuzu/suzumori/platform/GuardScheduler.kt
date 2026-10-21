@@ -12,10 +12,20 @@ import java.util.concurrent.TimeUnit
 /** 依照設定啟動或停止常駐服務與定期檢查。可以重複呼叫。 */
 class GuardScheduler(private val context: Context) {
 
+    /**
+     * 自動守護開啟時一律啟動服務監聽；「常駐通知」只決定以前景服務（顯示通知）或一般服務執行。
+     * targetSdk 22 不受背景啟動服務的限制，一般服務也能在背景啟動。
+     */
     fun apply(config: GuardConfig) {
         val service = Intent(context, GuardService::class.java)
-        if (config.autoGuard && config.persistentNotification) {
-            context.startForegroundService(service)
+        if (config.autoGuard) {
+            service.putExtra(GuardService.EXTRA_FOREGROUND, config.persistentNotification)
+            try {
+                if (config.persistentNotification) context.startForegroundService(service) else context.startService(service)
+            } catch (e: IllegalStateException) {
+                // 使用者在系統設定限制了本 App 的背景活動時，系統可能拒絕在背景啟動服務；交給下一次定期檢查重試。
+                Diag.i("GuardService start refused: $e")
+            }
         } else {
             context.stopService(service)
         }

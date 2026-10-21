@@ -10,11 +10,23 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 - 檢查更新：開啟 App 時與每天一次向 GitHub 查詢新版本。有新版本時首頁顯示提示，背景檢查到時發出通知，點開後顯示更新內容與下載連結。設定中可以關閉自動檢查。
 - 因此新增 `INTERNET` 權限，只用來連線到 `api.github.com`，不傳送任何個人資料。
+- FCM App 檢查：列出使用 FCM 的 App 與它們的自啟動、省電策略，點一下開啟該 App 的設定頁。只在打開這一頁時讀取，不修改任何設定。
+
+### 變更
+
+- 關閉常駐通知後仍會在背景監聽名單變化與螢幕開關；常駐通知只決定是前景服務還是一般服務。
+- FCM 診斷頁找不到新版頁面時，改開舊版的 GTalkServiceDiagnostics；兩個都沒有時顯示說明。
 
 ### Added
 
 - Update check: asks GitHub for a new version when the app opens and once a day. The home page shows a card when an update is out, and a background check posts a notification that opens the release notes and download link. Automatic checks can be turned off in Settings.
 - This adds the `INTERNET` permission, used only to reach `api.github.com`. No personal data is sent.
+- FCM apps check: lists the apps that use FCM with their autostart and battery saver settings, and opens an app's settings page in one tap. It reads only when you open the page and never changes anything.
+
+### Changed
+
+- With the persistent notification off, Suzumori still watches list changes and screen on/off in the background. The setting now only decides whether the service runs in the foreground.
+- If the FCM diagnostics page isn't found, the older GTalkServiceDiagnostics page is tried; if neither exists, an explanation is shown.
 
 ## [1.0.1] - 2026-10-19
 

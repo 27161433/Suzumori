@@ -158,7 +158,7 @@
     <string name="night_guard_summary">Adds GMS to the game allowlist so it isn\'t frozen at night</string>
     <string name="self_in_game_allowlist">Add this app to the game allowlist too</string>
     <string name="self_in_game_allowlist_summary">Adds Suzumori itself to the game allowlist</string>
-    <string name="persistent_notification_summary">Runs as a foreground service to react to list changes right away. Without it, background reactions may be much slower.</string>
+    <string name="persistent_notification_summary">Shows a persistent notification and runs as a foreground service. When off, Suzumori still watches the lists in the background, but the system pauses services without a notification more readily, so it may react more slowly.</string>
     <string name="settings_uninstall">Uninstall</string>
     <string name="cleanup_running">Cleaning up…</string>
     <string name="cleanup_summary">Removes only what this app added to the game allowlist, and stops auto guard</string>
@@ -327,4 +327,24 @@
     <string name="update_channel_description">Notifies you when a new version is out</string>
     <string name="update_notification_title">Suzumori %s is available</string>
     <string name="about_check_updates">Check for updates</string>
+
+    <!-- FCM apps -->
+    <string name="fcm_apps_title">FCM apps</string>
+    <string name="fcm_apps_entry_summary">If one app\'s notifications are late, check its autostart and battery saver</string>
+    <string name="fcm_apps_intro">Only adjust an app if GMS is fine but that app\'s notifications are still late. Setting every app to “No restrictions” isn\'t recommended.</string>
+    <string name="fcm_apps_privacy">Read only when you open this page or refresh. Nothing is changed or written to the event log.</string>
+    <string name="fcm_apps_dnd_hint">If a notification arrives on time but makes no sound, check whether Do Not Disturb is blocking that app.</string>
+    <string name="fcm_apps_scanning">Reading…</string>
+    <string name="fcm_apps_empty">No apps using FCM found</string>
+    <string name="fcm_apps_refresh">Refresh</string>
+    <string name="status_undetermined">Unknown</string>
+    <string name="fcm_diagnostics_not_found">GMS\'s FCM diagnostics page wasn\'t found</string>
+    <plurals name="fcm_apps_found">
+        <item quantity="one">%d app uses FCM</item>
+        <item quantity="other">%d apps use FCM</item>
+    </plurals>
+    <plurals name="fcm_apps_attention">
+        <item quantity="one">%d needs attention</item>
+        <item quantity="other">%d need attention</item>
+    </plurals>
 </resources>

@@ -148,7 +148,7 @@
     <string name="night_guard_summary">把 GMS 加入遊戲白名單，避免夜間被凍結</string>
     <string name="self_in_game_allowlist">本 App 也加入遊戲白名單</string>
     <string name="self_in_game_allowlist_summary">把自己加入遊戲白名單</string>
-    <string name="persistent_notification_summary">以前景服務常駐，即時監聽名單變化。關閉後在背景的反應可能會明顯變慢。</string>
+    <string name="persistent_notification_summary">顯示常駐通知，以前景服務執行。關閉後仍會在背景監聽名單變化，但系統比較容易暫停沒有通知的服務，反應可能變慢。</string>
     <string name="settings_uninstall">解除安裝</string>
     <string name="cleanup_running">清理中…</string>
     <string name="cleanup_summary">只移除本 App 加入遊戲白名單的項目，並停止自動守護</string>
@@ -316,4 +316,22 @@
     <string name="update_channel_description">有新版本時通知</string>
     <string name="update_notification_title">Suzumori %s 已推出</string>
     <string name="about_check_updates">檢查更新</string>
+
+    <!-- FCM App 檢查 -->
+    <string name="fcm_apps_title">FCM App 檢查</string>
+    <string name="fcm_apps_entry_summary">某個 App 推播延遲時，檢查它的自啟動與省電策略</string>
+    <string name="fcm_apps_intro">只有在 GMS 正常、但某個 App 的推播仍然延遲時，才需要調整那個 App。不建議把所有 App 都改成「無限制」。</string>
+    <string name="fcm_apps_privacy">只在你打開這一頁或重新整理時讀取，不會修改任何設定，也不會寫進事件紀錄。</string>
+    <string name="fcm_apps_dnd_hint">通知準時送達卻沒有聲音時，請檢查勿擾模式有沒有擋下這個 App。</string>
+    <string name="fcm_apps_scanning">正在讀取…</string>
+    <string name="fcm_apps_empty">找不到使用 FCM 的 App</string>
+    <string name="fcm_apps_refresh">重新整理</string>
+    <string name="status_undetermined">無法判斷</string>
+    <string name="fcm_diagnostics_not_found">找不到 GMS 的 FCM 診斷頁面</string>
+    <plurals name="fcm_apps_found">
+        <item quantity="other">找到 %d 個使用 FCM 的 App</item>
+    </plurals>
+    <plurals name="fcm_apps_attention">
+        <item quantity="other">其中 %d 個有設定沒開</item>
+    </plurals>
 </resources>
