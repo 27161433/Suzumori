@@ -55,7 +55,7 @@ Chinese HyperOS 4 (OS4.0.4.0, Android 17) doesn't enable this block in testing, 
 2. If it's blocked, turn on developer options and USB debugging (or wireless debugging) temporarily, then run once on a computer:
 
    ```
-   adb install --bypass-low-target-sdk-block Suzumori-1.0.1.apk
+   adb install --bypass-low-target-sdk-block Suzumori-1.1.0.apk
    ```
 
 3. After it's installed you can turn developer options off again. ADB isn't needed after that.

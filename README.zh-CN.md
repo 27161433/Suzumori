@@ -55,7 +55,7 @@ Android 14 起，AOSP 会拦截 targetSdk 过旧的 App（Android 15 起门槛�
 2. 如果被拦截，暂时开启开发者选项与 USB 调试（或无线调试），在电脑上执行一次：
 
    ```
-   adb install --bypass-low-target-sdk-block Suzumori-1.0.1.apk
+   adb install --bypass-low-target-sdk-block Suzumori-1.1.0.apk
    ```
 
 3. 装好之后就可以关闭开发者选项，之后不再需要 ADB。
