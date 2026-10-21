@@ -320,7 +320,7 @@
 
     <!-- FCM App 檢查 -->
     <string name="fcm_apps_title">FCM App 檢查</string>
-    <string name="fcm_apps_intro">只有在 GMS 正常、但某個 App 的推播仍然延遲時，才需要調整那個 App。不建議把所有 App 都改成「無限制」。</string>
+    <string name="fcm_apps_intro">要接收推播的 App 必須同時開啟「自啟動」，並把省電策略設為「無限制」；實測只要少一項就收不到通知。不需要通知的 App 不用調整。</string>
     <string name="fcm_apps_privacy">只在你打開這一頁或重新整理時讀取，不會修改任何設定，也不會寫進事件紀錄。</string>
     <string name="fcm_apps_dnd_hint">通知準時送達卻沒有聲音時，請檢查勿擾模式有沒有擋下這個 App。</string>
     <string name="fcm_apps_scanning">正在讀取…</string>
