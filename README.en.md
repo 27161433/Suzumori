@@ -73,7 +73,8 @@ SHA-256: 70706052f2e2a469afc178304ae36cbbfae6973dab19f8ef8e73e8e36a674339
 
 1. The first time you open the app, the system shows a long list of permissions (app list, home screen shortcuts, clipboard and so on).
    The system shows this review screen for every legacy app (targetSdk below 23). **Suzumori doesn't request these permissions** and can't skip the screen.
-   Leave everything off and tap OK.
+   **You don't need to grant any of them.** Leave everything off and tap OK (the blue button).<br>
+   <img src="docs/screenshots/zh-TW-permission-review.jpg" width="220" alt="Permission review screen on first launch (Traditional Chinese system)">
 2. The system warns that the app was built for an older version of Android. Tap OK; this is also normal for targetSdk 22.
 3. If the home page shows "Write permission is off", tap "Turn on", enable "Modify system settings", then come back. HyperOS turns it off by default after installation.
 4. If it shows "Battery saver isn't set to “No restrictions”", tap "Open settings". This opens Suzumori's battery saver page directly; choose "No restrictions".
