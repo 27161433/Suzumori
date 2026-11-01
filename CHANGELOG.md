@@ -4,6 +4,18 @@
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-11-01
+
+### 修正
+
+- 常駐通知選「固定位置：置底」時，安裝滿 14 天後就不再置底、內容也不再更新。Android 會直接丟棄時間早於 14 天前的通知，現在改用不會超過這個期限的時間排序。
+- 常駐通知被滑掉後，要等下次開啟 App 才會出現；現在滑掉後會立刻重新顯示。不需要定時檢查，不增加耗電。
+
+### Fixed
+
+- With the persistent notification set to "Fixed position: bottom", it stopped staying at the bottom and stopped updating 14 days after install. Android drops notifications whose time is more than 14 days old; the sort time now stays within that limit.
+- Swiping the persistent notification away hid it until the app was opened again. It now comes back right away, with no polling and no extra battery use.
+
 ## [1.1.0] - 2026-10-21
 
 ### 新增
@@ -68,5 +80,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 - Persistent notification styles: default, pinned (top or bottom), or foldable.
 - Pre-uninstall cleanup that removes only the game allowlist entries Suzumori added.
 
+[1.1.1]: https://github.com/27161433/Suzumori/releases/tag/v1.1.1
+[1.1.0]: https://github.com/27161433/Suzumori/releases/tag/v1.1.0
 [1.0.1]: https://github.com/27161433/Suzumori/releases/tag/v1.0.1
 [1.0.0]: https://github.com/27161433/Suzumori/releases/tag/v1.0.0
