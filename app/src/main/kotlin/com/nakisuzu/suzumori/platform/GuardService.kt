@@ -66,6 +66,12 @@ class GuardService : Service() {
         // 系統重新啟動（intent 為 null）或只重建服務時沒有這個資訊，交給 watch() 裡的設定監聽決定，
         // 避免關閉常駐通知時還閃一下通知。
         if (intent?.hasExtra(EXTRA_FOREGROUND) == true) setForeground(intent.getBooleanExtra(EXTRA_FOREGROUND, true))
+        // 使用者滑掉了常駐通知（見 GuardNotifications 的 deleteIntent）：仍是前景服務就重新顯示。
+        // 關閉常駐通知時是 App 自己移除通知，系統不會送出 deleteIntent。
+        if (intent?.action == ACTION_REPOST_NOTIFICATION && foreground) {
+            Diag.i("GuardService notification dismissed, reposting")
+            setForeground(true)
+        }
         startWatching()
         return START_STICKY
     }
@@ -164,6 +170,9 @@ class GuardService : Service() {
     companion object {
         /** 啟動服務時帶的 extra：是否進入前景（顯示常駐通知）。 */
         const val EXTRA_FOREGROUND = "com.nakisuzu.suzumori.extra.FOREGROUND"
+
+        /** 常駐通知被使用者滑掉時，通知的 deleteIntent 以這個 action 啟動服務。 */
+        const val ACTION_REPOST_NOTIFICATION = "com.nakisuzu.suzumori.action.REPOST_NOTIFICATION"
 
         private const val OBSERVER_DEBOUNCE_MILLIS = 300L
     }

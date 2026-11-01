@@ -10,6 +10,7 @@ import android.widget.RemoteViews
 import com.nakisuzu.suzumori.MainActivity
 import com.nakisuzu.suzumori.R
 import com.nakisuzu.suzumori.core.guard.ActionRecord
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -44,6 +45,14 @@ object GuardNotifications {
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        // HyperOS 不論 App 怎麼設定，都讓使用者滑掉前景服務的通知；滑掉後服務仍在，只是通知不見了。
+        // 系統在使用者滑掉時送出 deleteIntent，服務收到後立刻重新顯示。只在滑掉時觸發，平時不耗電。
+        val repost = PendingIntent.getService(
+            context,
+            0,
+            Intent(context, GuardService::class.java).setAction(GuardService.ACTION_REPOST_NOTIFICATION),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val title = context.getString(R.string.notification_title)
         val text = lastPatch?.let {
             context.getString(
@@ -62,18 +71,22 @@ object GuardNotifications {
             // 沒有設定自訂版面時，系統畫出來的就是一般的標題與內文。
             .setStyle(Notification.DecoratedCustomViewStyle())
             .setContentIntent(openApp)
+            .setDeleteIntent(repost)
             .setOngoing(true)
             .setShowWhen(false)
             .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
         when (style) {
             NotificationStyle.SYSTEM -> Unit
             // HyperOS 通知欄同一區塊依 when 由新到舊排列。Builder 預設 when 是建立當下，
-            // 每次更新內容都會讓這則常駐通知跳回最上面，所以改用固定的時間：
-            // 置底用安裝時間，排在較新的通知下方；置頂用遙遠的未來，永遠比其他通知新。
+            // 每次更新內容都會讓這則常駐通知跳回最上面，所以改用刻意的時間：
+            // 置底用 13 天前，排在較新的通知下方；置頂用遙遠的未來，永遠比其他通知新。
+            // 置底不能用安裝時間這類固定的過去時間：系統會直接丟棄 when 早於 14 天前的通知與更新
+            // （NotificationManagerService 的 NOTIFICATION_MAX_AGE_AT_POST，logcat 顯示 Ignored enqueue for old），
+            // 安裝滿 14 天後通知就再也更新不了。
             NotificationStyle.POSITIONED -> builder.setWhen(
                 when (position) {
                     NotificationPosition.TOP -> FAR_FUTURE_MILLIS
-                    NotificationPosition.BOTTOM -> installedAt(context)
+                    NotificationPosition.BOTTOM -> System.currentTimeMillis() - BOTTOM_AGE_MILLIS
                 },
             )
             // HyperOS 只在通知帶有自訂版面（contentView）時才提供長按「收納」。
@@ -88,10 +101,6 @@ object GuardNotifications {
         return builder.build()
     }
 
-    private fun installedAt(context: Context): Long =
-        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime }
-            .getOrDefault(0L)
-
     /** 更新顯示中的常駐通知。只在服務是前景服務時呼叫，否則會多出一則沒有服務的通知。 */
     fun post(context: Context, notification: Notification) {
         context.getSystemService(NotificationManager::class.java).notify(ID, notification)
@@ -99,4 +108,7 @@ object GuardNotifications {
 
     /** 2100-01-01 00:00 UTC。通知設定為不顯示時間，這個值只用來排序。 */
     private const val FAR_FUTURE_MILLIS = 4_102_444_800_000L
+
+    /** 置底時 when 往前推的時間。比系統的 14 天上限少一天，留一點餘裕。 */
+    private val BOTTOM_AGE_MILLIS = Duration.ofDays(13).toMillis()
 }
