@@ -36,6 +36,7 @@ Global HyperOS builds don't have this freezing mechanism and don't need Suzumori
 - **Auto guard**: puts GMS back into the exemption lists as soon as it's removed. Suzumori watches the lists, screen on/off, boot (including before unlock) and app updates, with a fallback check every 15 minutes. The switch is in the dial on the home page.
 - **Night guard**: adds GMS (and Suzumori) to the game allowlist, so HyperOS 4 doesn't freeze it at night.
 - **Unfreeze & reconnect**: restores the lists, then unfreezes GMS and asks it to reconnect. You can run it from the app or from a quick settings tile.
+- **Automatic reconnect**: sends unfreeze and reconnect every 60 seconds while the phone is awake, 25 seconds after a network change, and on every 15-minute periodic check, so a dropped FCM connection comes back without any tapping. Optionally, "Sleep guard boost" in Settings wakes the phone every 1, 5 or 10 minutes to do the same while asleep.
 - **Event log**: keeps the last 2,000 list rewrites, patches and broadcasts, exportable as plain text. Use it to see how often and when PowerKeeper and Joyose rewrite the lists.
 - **Self-monitoring**: records whether Suzumori was frozen, why its process was killed, and whether it restarted afterwards.
 - **Permission prompts**: if write permission, battery saver or autostart isn't set up, the home page says so and opens the right system page in one tap.
@@ -201,7 +202,7 @@ When reporting a problem, please attach the log exported from the top right of t
 
 ## Privacy
 
-- The only permissions are `INTERNET`, `WRITE_SETTINGS`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` and `POST_NOTIFICATIONS`.
+- The only permissions are `INTERNET`, `WRITE_SETTINGS`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE`, `POST_NOTIFICATIONS` and `ACCESS_NETWORK_STATE` (used only to notice network changes and send a reconnect afterwards).
 - The network is only used to ask GitHub (`api.github.com`) for a new version, and no personal data is sent. If you turn off "Check for updates automatically" in Settings, Suzumori only connects when you tap "Check again" on the update page.
 - The FCM apps check reads installed apps' settings on the phone only when you switch to that tab or refresh it. Nothing is uploaded, changed or written to the event log, and it needs no extra permission.
 - There's no analytics, tracking or crash-reporting SDK. All records stay on the phone and only leave it when you export them.

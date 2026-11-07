@@ -2,20 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 權限只有這五個。INTERNET 只用來向 GitHub 查詢新版本（見 platform/Updates），可以在設定中關閉。 -->
+    <!-- 權限只有這六個。INTERNET 只用來向 GitHub 查詢新版本（見 platform/Updates），可以在設定中關閉。
+         ACCESS_NETWORK_STATE 只用來得知網路變化，之後補送解凍與重連（見 platform/NetworkEvents）。 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- WorkManager 自帶的權限。本 App 不持有 wake lock；定期檢查與每天的更新檢查都不設網路條件
-         （更新檢查失敗時依退避間隔重試），用不到網路狀態，移除。 -->
+    <!-- WorkManager 自帶的權限。本 App 不持有 wake lock，移除。
+         定期檢查與每天的更新檢查都不設網路條件（更新檢查失敗時依退避間隔重試）。 -->
     <uses-permission
         android:name="android.permission.WAKE_LOCK"
-        tools:node="remove" />
-    <uses-permission
-        android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
 
     <!-- androidx.core 只在 API 33 以下用這個權限模擬 RECEIVER_NOT_EXPORTED。
@@ -80,6 +79,12 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- 補送解凍與重連的鬧鐘（見 platform/KeepAliveAlarms）。 -->
+        <receiver
+            android:name=".platform.AlarmReceiver"
+            android:directBootAware="true"
+            android:exported="false" />
 
         <service
             android:name=".platform.UnfreezeTileService"

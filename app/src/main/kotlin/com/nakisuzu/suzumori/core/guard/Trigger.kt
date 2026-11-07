@@ -18,6 +18,9 @@ enum class Trigger {
     SETTINGS_CHANGED,
     UNINSTALL_CLEANUP,
     SELF_MONITOR,
+    NETWORK_CHANGED,
+    KEEPALIVE,
+    SLEEP_KEEPALIVE,
     ;
 
     companion object {

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.nakisuzu.suzumori.AppContainer
 import com.nakisuzu.suzumori.SuzumoriApp
 import com.nakisuzu.suzumori.core.config.GuardConfig
+import com.nakisuzu.suzumori.core.config.SleepKeepAlive
 import com.nakisuzu.suzumori.platform.AppLanguage
 import com.nakisuzu.suzumori.platform.NotificationPosition
 import com.nakisuzu.suzumori.platform.NotificationStyle
@@ -68,6 +69,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setSelfInGameAllowlist(enabled: Boolean) = run { container.actions.setSelfInGameAllowlist(enabled) }
 
     fun setPersistentNotification(enabled: Boolean) = run { container.actions.setPersistentNotification(enabled) }
+
+    fun setSleepKeepAlive(interval: SleepKeepAlive) = run { container.actions.setSleepKeepAlive(interval) }
 
     private fun run(action: suspend () -> Unit) {
         if (busy.value) return

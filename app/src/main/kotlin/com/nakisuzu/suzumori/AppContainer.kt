@@ -19,6 +19,7 @@ import com.nakisuzu.suzumori.platform.DeviceStorage
 import com.nakisuzu.suzumori.platform.GuardActions
 import com.nakisuzu.suzumori.platform.GuardScheduler
 import com.nakisuzu.suzumori.platform.HintStore
+import com.nakisuzu.suzumori.platform.KeepAliveAlarms
 import com.nakisuzu.suzumori.platform.SelfMonitor
 import com.nakisuzu.suzumori.platform.SystemSettingsStore
 import com.nakisuzu.suzumori.platform.Updates
@@ -66,6 +67,7 @@ class AppContainer(context: Context) {
     )
 
     val scheduler = GuardScheduler(appContext)
+    val keepAlive = KeepAliveAlarms(appContext, configs)
     val actions = GuardActions(controller, configs, scheduler, appContext.packageName)
     val selfMonitor = SelfMonitor(appContext, eventLog, guardState)
 

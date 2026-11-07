@@ -151,6 +151,9 @@ object Labels {
         Trigger.SETTINGS_CHANGED -> R.string.trigger_settings_changed
         Trigger.UNINSTALL_CLEANUP -> R.string.trigger_uninstall_cleanup
         Trigger.SELF_MONITOR -> R.string.trigger_self_monitor
+        Trigger.NETWORK_CHANGED -> R.string.trigger_network_changed
+        Trigger.KEEPALIVE -> R.string.trigger_keepalive
+        Trigger.SLEEP_KEEPALIVE -> R.string.trigger_sleep_keepalive
     }
 
     /** 紀錄中保存的觸發原因：認得的名稱翻成目前的語言，舊版無法對應的原文照樣顯示。 */

@@ -5,6 +5,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.SystemClock
 import com.nakisuzu.suzumori.SuzumoriApp
 import com.nakisuzu.suzumori.core.guard.Trigger
@@ -15,6 +16,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -24,7 +26,8 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 /**
- * 常駐服務：監聽兩個名單 key 與螢幕開關，有變化就立即檢查。自動守護開啟時一律執行。
+ * 常駐服務：監聽兩個名單 key 與螢幕開關，有變化就立即檢查；醒著時每 60 秒、網路變化後 25 秒補送解凍與重連，
+ * 並依設定排螢幕關閉時的喚醒鬧鐘（見 KeepAliveAlarms）。自動守護開啟時一律執行。
  *
  * 「常駐通知」只決定這個服務是前景服務（顯示通知）還是一般的背景服務，不影響有沒有監聽。
  * 沒有任何服務時，App 在背景會被系統暫停，observer 事件會延後送達（實測延後約 10 秒），
@@ -44,6 +47,9 @@ class GuardService : Service() {
     /** 語言或其他設定改變時加一，讓通知用新的語言重建。 */
     private val configChanges = MutableStateFlow(0)
 
+    /** 螢幕是否關閉。睡眠喚醒鬧鐘開著時，醒著用的 60 秒迴圈就不重複補送。 */
+    private val screenOff = MutableStateFlow(false)
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
@@ -56,6 +62,7 @@ class GuardService : Service() {
     override fun onCreate() {
         super.onCreate()
         Diag.i("GuardService onCreate")
+        screenOff.value = !getSystemService(PowerManager::class.java).isInteractive
         startWatching()
     }
 
@@ -111,6 +118,12 @@ class GuardService : Service() {
             Diag.i("ensure ${trigger.name} done in ${SystemClock.uptimeMillis() - start} ms: $result")
         }
 
+        suspend fun nudge(trigger: Trigger) {
+            val start = SystemClock.uptimeMillis()
+            val result = controller.nudge(trigger)
+            Diag.i("nudge ${trigger.name} done in ${SystemClock.uptimeMillis() - start} ms: $result")
+        }
+
         // 名單變化：去抖動約 300 ms，合併成一次檢查。自己的寫入也會觸發，但下一次檢查會讀到正常狀態而結束。
         launch {
             merge(
@@ -118,7 +131,29 @@ class GuardService : Service() {
                 container.settings.changes(SettingKeys.GAME_ALLOWLIST).map { Trigger.GAME_ALLOWLIST_CHANGED },
             ).debounce(OBSERVER_DEBOUNCE_MILLIS).collect { ensure(it) }
         }
-        launch { screenEvents(this@GuardService).collect { ensure(it) } }
+        // 螢幕開關：先依新的狀態排或取消睡眠喚醒鬧鐘，再檢查名單。
+        launch {
+            screenEvents(this@GuardService).collect {
+                screenOff.value = it == Trigger.SCREEN_OFF
+                container.keepAlive.rearmSleep()
+                ensure(it)
+            }
+        }
+
+        // 網路變化：GMS 自己的重連鬧鐘約 11 秒後響，先讓它跑，之後才補送一次（見 GuardController.nudge）。
+        // 延遲用鬧鐘，手機在這 25 秒內睡著也會準時觸發；連續的變化只留最後一次。
+        launch { networkEvents(this@GuardService).collect { container.keepAlive.scheduleNetwork() } }
+
+        // 醒著時每 60 秒補送一次。不持有 wake lock，手機睡著時這個計時會停，醒來再繼續；
+        // 睡眠中要定期喚醒由設定裡的睡眠喚醒鬧鐘負責。60 秒是 GMS 心跳節流的下限，更密沒有用。
+        launch {
+            while (true) {
+                delay(KEEPALIVE_MILLIS)
+                // 螢幕關閉且睡眠喚醒鬧鐘開著時由鬧鐘負責，這裡不重複（實測睡著時這個迴圈仍會零星跑到）。
+                val sleepAlarmActive = screenOff.value && container.configs.current().sleepKeepAlive.intervalMillis != null
+                if (!sleepAlarmActive) nudge(Trigger.KEEPALIVE)
+            }
+        }
         launch {
             combine(
                 container.guardState.state.map { it.lastPatch }.distinctUntilChanged(),
@@ -136,6 +171,7 @@ class GuardService : Service() {
         launch {
             container.configs.config.collect { config ->
                 if (config.autoGuard) setForeground(config.persistentNotification) else stopSelf()
+                container.keepAlive.rearmSleep()
             }
         }
         launch { ensure(Trigger.SERVICE_START) }
@@ -164,6 +200,10 @@ class GuardService : Service() {
     override fun onDestroy() {
         Diag.i("GuardService onDestroy")
         scope.cancel()
+        // 自動守護關閉而停止時取消鬧鐘；被系統結束時 rearmSleep 會依設定保留睡眠喚醒。
+        val container = (application as SuzumoriApp).container
+        container.keepAlive.cancelNetwork()
+        container.appScope.launch { container.keepAlive.rearmSleep() }
         super.onDestroy()
     }
 
@@ -175,5 +215,8 @@ class GuardService : Service() {
         const val ACTION_REPOST_NOTIFICATION = "com.nakisuzu.suzumori.action.REPOST_NOTIFICATION"
 
         private const val OBSERVER_DEBOUNCE_MILLIS = 300L
+
+        /** 醒著時補送解凍與重連的間隔。 */
+        private const val KEEPALIVE_MILLIS = 60_000L
     }
 }

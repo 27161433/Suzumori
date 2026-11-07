@@ -60,6 +60,16 @@ class GuardController(
      */
     suspend fun ensureAndUnfreeze(trigger: Trigger): EnsureResult = mutex.withLock { ensureLocked(trigger, forceUnfreeze = true) }
 
+    /**
+     * 例行補送：先確保名單正常，再解凍並重連，但正常送出時不寫事件紀錄，只更新最近一次解凍的時間。
+     * 給定期檢查與網路變化用，自動守護關閉時略過。
+     *
+     * 實測 HyperOS 4 的資源預算（SSRU）用完時會把 GMS 的鬧鐘全部延後，FCM 因網路變化斷線後，
+     * GMS 自己排的重連鬧鐘就不會響，通知會一直收不到。`GCM_RECONNECT` 不經過鬧鐘，
+     * 而且 GMS 已連線時會直接忽略它，所以可以定期補送。
+     */
+    suspend fun nudge(trigger: Trigger): EnsureResult = mutex.withLock { ensureLocked(trigger, forceUnfreeze = true, quiet = true) }
+
     /** 從遊戲白名單移除 [packages] 中由本 App 加入的項目，用於關閉夜間保護或關閉「本 App 加入遊戲白名單」。 */
     suspend fun removeOwnedFromGameAllowlist(trigger: Trigger, packages: Set<String>, clearBaseline: Boolean): CleanupResult =
         mutex.withLock { removeOwnedLocked(trigger, packages, clearBaseline) }
@@ -73,7 +83,8 @@ class GuardController(
         removeOwnedLocked(Trigger.UNINSTALL_CLEANUP, setOf(Packages.GMS, selfPackage), clearBaseline = true)
     }
 
-    private suspend fun ensureLocked(trigger: Trigger, forceUnfreeze: Boolean): EnsureResult {
+    /** @param quiet 解凍與重連正常送出時不寫事件紀錄（送出失敗仍會記錄）。 */
+    private suspend fun ensureLocked(trigger: Trigger, forceUnfreeze: Boolean, quiet: Boolean = false): EnsureResult {
         val config = configs.current()
         if (trigger.isAutomatic && !config.autoGuard) return EnsureResult.SKIPPED
 
@@ -83,7 +94,7 @@ class GuardController(
 
         if (rateLimiter.isPaused(clock())) {
             record(trigger, null, null, null, msg(LogKey.SKIP_PATCH), msg(LogKey.PAUSED_BY_RATE_LIMIT), EventLevel.WARNING)
-            if (forceUnfreeze) unfreezeLocked(trigger)
+            if (forceUnfreeze) unfreezeLocked(trigger, quiet)
             return EnsureResult(patched = false, failed = false, unfroze = forceUnfreeze, paused = true)
         }
 
@@ -108,7 +119,8 @@ class GuardController(
             states.update { it.copy(lastPatch = ActionRecord(clock(), trigger, clauses(patches))) }
         }
         val unfreeze = patches.isNotEmpty() || firstSinceBoot || forceUnfreeze
-        if (unfreeze) unfreezeLocked(trigger)
+        // 有修補或是開機後的第一次時一律記錄，例行補送才安靜。
+        if (unfreeze) unfreezeLocked(trigger, quiet = quiet && patches.isEmpty() && !firstSinceBoot)
         if (firstSinceBoot) states.update { it.copy(lastEnsuredBootCount = bootCount) }
 
         return EnsureResult(
@@ -309,10 +321,13 @@ class GuardController(
         return current
     }
 
-    private suspend fun unfreezeLocked(trigger: Trigger) {
-        recordSignals(trigger, msg(LogKey.SEND_UNFREEZE), signals.sendUnfreeze())
+    /** @param quiet 只在有廣播拋出例外時才記錄；例行補送每 15 分鐘一次，全部記錄會淹沒事件紀錄。 */
+    private suspend fun unfreezeLocked(trigger: Trigger, quiet: Boolean = false) {
+        val unfreeze = signals.sendUnfreeze()
+        if (!quiet || unfreeze.any { it.error != null }) recordSignals(trigger, msg(LogKey.SEND_UNFREEZE), unfreeze)
         delay(policy.reconnectDelayMillis)
-        recordSignals(trigger, msg(LogKey.SEND_RECONNECT), signals.sendReconnect())
+        val reconnect = signals.sendReconnect()
+        if (!quiet || reconnect.any { it.error != null }) recordSignals(trigger, msg(LogKey.SEND_RECONNECT), reconnect)
         states.update { it.copy(lastUnfreeze = ActionRecord(clock(), trigger, msg(LogKey.UNFREEZE_SUMMARY))) }
     }
 

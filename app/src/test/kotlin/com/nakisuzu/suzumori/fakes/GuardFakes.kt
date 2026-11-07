@@ -38,6 +38,9 @@ class FakeGmsSignals(private val timeline: MutableList<String> = mutableListOf()
     var unfreezeCount = 0
     var reconnectCount = 0
 
+    /** 重連廣播要回報的例外描述；null 表示正常送出。 */
+    var reconnectError: String? = null
+
     override fun sendUnfreeze(): List<SendResult> {
         unfreezeCount++
         timeline += "unfreeze"
@@ -47,7 +50,7 @@ class FakeGmsSignals(private val timeline: MutableList<String> = mutableListOf()
     override fun sendReconnect(): List<SendResult> {
         reconnectCount++
         timeline += "reconnect"
-        return listOf(SendResult("GCM_RECONNECT → com.google.android.gms", null))
+        return listOf(SendResult("GCM_RECONNECT → com.google.android.gms", reconnectError))
     }
 }
 

@@ -198,6 +198,16 @@
     <string name="trigger_settings_changed">設定變更</string>
     <string name="trigger_uninstall_cleanup">解除安裝前清理</string>
     <string name="trigger_self_monitor">自我監測</string>
+    <string name="trigger_network_changed">網路變化</string>
+    <string name="trigger_keepalive">連線保活</string>
+    <string name="trigger_sleep_keepalive">休眠增強守護</string>
+    <string name="sleep_keep_alive">休眠增強守護</string>
+    <string name="sleep_keep_alive_desc_off">關閉：螢幕關閉期間只在手機剛好醒著時發送解凍與重連，最晚等到每 15 分鐘的定期檢查。</string>
+    <string name="sleep_keep_alive_desc_on">在螢幕關閉期間每隔 %1$s 喚醒手機發送解凍與重連，會稍微增加手機待機時的耗電量。</string>
+    <string name="sleep_keep_alive_off">關閉</string>
+    <string name="sleep_keep_alive_1m">1 分鐘</string>
+    <string name="sleep_keep_alive_5m">5 分鐘</string>
+    <string name="sleep_keep_alive_10m">10 分鐘</string>
 
     <!-- 守護核心寫進事件紀錄的文字 -->
     <string name="log_self_app">本 App</string>

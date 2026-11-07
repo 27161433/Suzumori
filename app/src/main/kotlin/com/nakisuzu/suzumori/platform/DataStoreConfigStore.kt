@@ -4,8 +4,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.nakisuzu.suzumori.core.config.ConfigStore
 import com.nakisuzu.suzumori.core.config.GuardConfig
+import com.nakisuzu.suzumori.core.config.SleepKeepAlive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -24,6 +26,7 @@ class DataStoreConfigStore(private val dataStore: DataStore<Preferences>) : Conf
             prefs[NIGHT_PROTECTION] = result.nightProtection
             prefs[SELF_IN_GAME_ALLOWLIST] = result.selfInGameAllowlist
             prefs[PERSISTENT_NOTIFICATION] = result.persistentNotification
+            prefs[SLEEP_KEEP_ALIVE] = result.sleepKeepAlive.name
         }
         return result
     }
@@ -35,6 +38,7 @@ class DataStoreConfigStore(private val dataStore: DataStore<Preferences>) : Conf
             nightProtection = this[NIGHT_PROTECTION] ?: defaults.nightProtection,
             selfInGameAllowlist = this[SELF_IN_GAME_ALLOWLIST] ?: defaults.selfInGameAllowlist,
             persistentNotification = this[PERSISTENT_NOTIFICATION] ?: defaults.persistentNotification,
+            sleepKeepAlive = SleepKeepAlive.fromName(this[SLEEP_KEEP_ALIVE]) ?: defaults.sleepKeepAlive,
         )
     }
 
@@ -43,5 +47,6 @@ class DataStoreConfigStore(private val dataStore: DataStore<Preferences>) : Conf
         val NIGHT_PROTECTION = booleanPreferencesKey("night_protection")
         val SELF_IN_GAME_ALLOWLIST = booleanPreferencesKey("self_in_game_allowlist")
         val PERSISTENT_NOTIFICATION = booleanPreferencesKey("persistent_notification")
+        val SLEEP_KEEP_ALIVE = stringPreferencesKey("sleep_keep_alive")
     }
 }

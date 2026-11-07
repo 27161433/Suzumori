@@ -10,6 +10,7 @@ import com.nakisuzu.suzumori.fakes.FakeEventLog
 import com.nakisuzu.suzumori.fakes.FakeGmsSignals
 import com.nakisuzu.suzumori.fakes.FakeGuardStateStore
 import com.nakisuzu.suzumori.fakes.FakeSettingsStore
+import com.nakisuzu.suzumori.core.log.EventLevel
 import com.nakisuzu.suzumori.core.log.LogKey
 import com.nakisuzu.suzumori.core.log.LogText
 import com.nakisuzu.suzumori.core.log.clauses
@@ -406,5 +407,54 @@ class GuardControllerTest {
 
         assertEquals(CleanupResult.NOTHING_TO_DO, result)
         assertTrue(h.settings.writes.isEmpty())
+    }
+
+    @Test
+    fun `例行補送在名單正常時解凍並重連，但不寫事件紀錄`() = runTest {
+        val h = Harness(this, healthy)
+
+        val result = h.controller.nudge(Trigger.PERIODIC)
+
+        assertTrue(h.settings.writes.isEmpty())
+        assertEquals(listOf("unfreeze", "reconnect"), h.timeline.filter { it == "unfreeze" || it == "reconnect" })
+        assertTrue("事件紀錄：${h.log.all}", h.log.all.isEmpty())
+        assertTrue(result.unfroze)
+        assertEquals(Trigger.PERIODIC, h.states.value.lastUnfreeze?.trigger)
+    }
+
+    @Test
+    fun `例行補送在自動守護關閉時略過`() = runTest {
+        val h = Harness(this, healthy, config = GuardConfig(autoGuard = false))
+
+        val result = h.controller.nudge(Trigger.NETWORK_CHANGED)
+
+        assertEquals(EnsureResult.SKIPPED, result)
+        assertEquals(0, h.signals.unfreezeCount)
+        assertEquals(0, h.signals.reconnectCount)
+        assertNull(h.states.value.lastUnfreeze)
+    }
+
+    @Test
+    fun `例行補送的廣播拋出例外時仍記錄警告`() = runTest {
+        val h = Harness(this, healthy)
+        h.signals.reconnectError = "SecurityException"
+
+        h.controller.nudge(Trigger.NETWORK_CHANGED)
+
+        val entries = h.log.all
+        assertEquals(1, entries.size)
+        assertEquals(LogKey.SEND_RECONNECT, entries.single().action.key)
+        assertEquals(EventLevel.WARNING, entries.single().level)
+    }
+
+    @Test
+    fun `例行補送有修補時照常記錄解凍與重連`() = runTest {
+        val h = Harness(this, mapOf(millet to "com.a", game to "${gms}_$self"))
+
+        h.controller.nudge(Trigger.PERIODIC)
+
+        assertEquals("com.a,$gms,$self", h.settings.values[millet])
+        assertTrue(h.log.all.any { it.action.key == LogKey.SEND_UNFREEZE })
+        assertTrue(h.log.all.any { it.action.key == LogKey.SEND_RECONNECT })
     }
 }

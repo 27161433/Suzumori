@@ -198,6 +198,16 @@
     <string name="trigger_settings_changed">设置变更</string>
     <string name="trigger_uninstall_cleanup">卸载前清理</string>
     <string name="trigger_self_monitor">自我监测</string>
+    <string name="trigger_network_changed">网络变化</string>
+    <string name="trigger_keepalive">连接保活</string>
+    <string name="trigger_sleep_keepalive">休眠增强守护</string>
+    <string name="sleep_keep_alive">休眠增强守护</string>
+    <string name="sleep_keep_alive_desc_off">关闭：屏幕熄灭期间只在手机刚好醒着时发送解冻与重连，最晚等到每 15 分钟的定期检查。</string>
+    <string name="sleep_keep_alive_desc_on">在屏幕熄灭期间每隔 %1$s 唤醒手机发送解冻与重连，会稍微增加手机待机时的耗电量。</string>
+    <string name="sleep_keep_alive_off">关闭</string>
+    <string name="sleep_keep_alive_1m">1 分钟</string>
+    <string name="sleep_keep_alive_5m">5 分钟</string>
+    <string name="sleep_keep_alive_10m">10 分钟</string>
 
     <!-- 守护核心写进事件记录的文字 -->
     <string name="log_self_app">本 App</string>

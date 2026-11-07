@@ -208,6 +208,16 @@
     <string name="trigger_settings_changed">Settings changed</string>
     <string name="trigger_uninstall_cleanup">Pre-uninstall cleanup</string>
     <string name="trigger_self_monitor">Self-monitor</string>
+    <string name="trigger_network_changed">Network changed</string>
+    <string name="trigger_keepalive">Keep-alive</string>
+    <string name="trigger_sleep_keepalive">Sleep guard boost</string>
+    <string name="sleep_keep_alive">Sleep guard boost</string>
+    <string name="sleep_keep_alive_desc_off">Off: while the screen is off, Suzumori only sends unfreeze and reconnect when the phone happens to be awake, and at the latest on the 15-minute periodic check.</string>
+    <string name="sleep_keep_alive_desc_on">While the screen is off, wakes the phone every %1$s to send unfreeze and reconnect. This slightly increases standby battery use.</string>
+    <string name="sleep_keep_alive_off">Off</string>
+    <string name="sleep_keep_alive_1m">1 min</string>
+    <string name="sleep_keep_alive_5m">5 min</string>
+    <string name="sleep_keep_alive_10m">10 min</string>
 
     <!-- Text the guard writes into the event log -->
     <string name="log_self_app">this app</string>

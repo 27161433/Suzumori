@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nakisuzu.suzumori.R
+import com.nakisuzu.suzumori.core.config.SleepKeepAlive
 import com.nakisuzu.suzumori.platform.AppLanguage
 import com.nakisuzu.suzumori.platform.NotificationPosition
 import com.nakisuzu.suzumori.platform.NotificationStyle
@@ -173,6 +174,36 @@ fun SettingsScreen(
                             showDivider = false,
                         )
                     }
+                    Panel(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = stringResource(R.string.sleep_keep_alive),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.onSurface,
+                            )
+                            AnimatedText(
+                                text = if (config.sleepKeepAlive == SleepKeepAlive.OFF) {
+                                    stringResource(R.string.sleep_keep_alive_desc_off)
+                                } else {
+                                    stringResource(R.string.sleep_keep_alive_desc_on, config.sleepKeepAlive.label())
+                                },
+                                color = colors.onSurfaceMuted,
+                                fontSize = 12,
+                                lineHeight = 20,
+                            )
+                        }
+                        SegmentedSelector(
+                            options = SleepKeepAlive.entries,
+                            selected = config.sleepKeepAlive,
+                            label = { it.label() },
+                            onSelect = viewModel::setSleepKeepAlive,
+                        )
+                    }
                 }
             }
         }
@@ -281,6 +312,16 @@ private fun NotificationPosition.label(): String = stringResource(
     when (this) {
         NotificationPosition.TOP -> R.string.notification_position_top
         NotificationPosition.BOTTOM -> R.string.notification_position_bottom
+    },
+)
+
+@Composable
+private fun SleepKeepAlive.label(): String = stringResource(
+    when (this) {
+        SleepKeepAlive.OFF -> R.string.sleep_keep_alive_off
+        SleepKeepAlive.ONE_MINUTE -> R.string.sleep_keep_alive_1m
+        SleepKeepAlive.FIVE_MINUTES -> R.string.sleep_keep_alive_5m
+        SleepKeepAlive.TEN_MINUTES -> R.string.sleep_keep_alive_10m
     },
 )
 

@@ -4,6 +4,20 @@
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### 新增
+
+- FCM 斷線後自動補送重連。實測 HyperOS 4 的資源預算（SSRU）用完時，會把 GMS 的所有鬧鐘延後：FCM 因網路變化斷線後 GMS 自己排的重連鬧鐘不會響，GMS 的心跳鬧鐘也不響，所以連線悄悄死掉時它永遠不會發現，通知就一直收不到，直到手動按「解凍並重連」。現在 Suzumori 會自己補送解凍與重連：醒著時每 60 秒一次（GMS 把心跳節流成每分鐘最多一次，更密沒有用）、網路變化後 25 秒一次（用鬧鐘延遲，手機在這期間睡著也會準時），以及每 15 分鐘的定期檢查。GMS 已連線時只會回一次心跳，不會斷線；連線已死時會立刻重連並補收積壓的推播。例行補送不寫入事件紀錄，只更新首頁「最近一次解凍與重連」的時間。
+- 設定新增「休眠增強守護」：關閉（預設）、1 分鐘、5 分鐘、10 分鐘。開啟後在螢幕關閉期間每隔這麼久喚醒手機發送解凍與重連，FCM 斷線後最多等這麼久就會接回來，會稍微增加待機耗電。關閉時只在手機自己醒著時發送，最晚等到 15 分鐘的定期檢查。
+- 因此新增 `ACCESS_NETWORK_STATE` 權限（一般權限，安裝時自動授予），只用來得知網路變化。
+
+### Added
+
+- Automatic reconnect after FCM drops. On HyperOS 4, once the system's resource budget (SSRU) runs out it defers every GMS alarm: after a network change drops the FCM connection, the reconnect alarm GMS schedules never fires, and because its heartbeat alarm is blocked too, a connection that dies silently is never noticed. Notifications stop until "Unfreeze & reconnect" is tapped. Suzumori now sends unfreeze and reconnect itself: every 60 seconds while the phone is awake (GMS throttles heartbeats to one per minute, so anything faster is wasted), 25 seconds after a network change (delayed with an alarm, so it fires on time even if the phone falls asleep in between), and on every 15-minute periodic check. While already connected GMS just answers one heartbeat and stays connected; when the connection is dead it reconnects at once and the queued pushes arrive. These routine sends are not written to the event log; only the "Last unfreeze" time on the home page is updated.
+- New setting "Sleep guard boost": Off (default), 1, 5 or 10 minutes. When on, Suzumori wakes the phone at that interval while the screen is off and sends unfreeze and reconnect, so a dropped FCM connection comes back within that time; this slightly increases standby battery use. When off, it only sends while the phone happens to be awake, and at the latest on the 15-minute periodic check.
+- This adds the `ACCESS_NETWORK_STATE` permission (a normal permission, granted at install), used only to notice network changes.
+
 ## [1.1.1] - 2026-11-01
 
 ### 修正
